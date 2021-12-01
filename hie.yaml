@@ -1,0 +1,6 @@
+cradle:
+  cabal:
+    - path: "./common"
+      component: "advent2021:lib:advent2021"
+    - path: "./execs/Day01.hs"
+      component: "advent2021:Day01"
