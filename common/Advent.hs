@@ -74,13 +74,12 @@ pickOne xs = [ (x, l++r) | (l,x:r) <- zip (inits xs) (tails xs) ]
 
 -- | Implementation of 'nub' that uses 'Ord' for efficiency.
 ordNub :: Ord a => [a] -> [a]
-ordNub = go Set.empty
+ordNub xs = foldr f (const []) xs Set.empty
   where
-    go _ [] = []
-    go seen (x:xs)
-      | Set.member x seen = go seen xs
-      | otherwise         = x : go (Set.insert x seen) xs
-
+    f x rec seen =
+      case rec <$> Set.alterF (\old -> (old, True)) x seen of
+        (True,  ys) -> ys
+        (False, ys) -> x : ys
 
 -- | Compute the minimum element of a list or return Nothing if it is empty.
 --
