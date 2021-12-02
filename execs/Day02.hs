@@ -15,7 +15,6 @@ module Main (main) where
 
 import Advent.Format (format)
 import Data.Foldable (foldMap')
-import Numeric.LinearAlgebra hiding (format, C, (<>))
 
 -- | Three possible commands a submarine can recieve.
 data C = Cforward | Cdown | Cup
