@@ -45,10 +45,9 @@ library
   build-tool-depends: alex:alex, happy:happy
 
   build-depends:
-    base         ^>= 4.15,
-    array        ^>= 0.5.4,
-    containers   ^>= 0.6,
-    integer-gmp  ^>= 1.1,
+    base             ^>= 4.15,
+    array            ^>= 0.5.4,
+    containers       ^>= 0.6,
     template-haskell ^>= 2.17,
 
   if flag(bench)

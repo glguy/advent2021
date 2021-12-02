@@ -10,7 +10,7 @@ Maintainer  : emertens@gmail.com
 module Advent.Chinese (Mod(..), toMod, chinese) where
 
 import Control.Monad (foldM)
-import GHC.Integer.GMP.Internals (gcdExtInteger)
+import GHC.Num.Integer (integerGcde)
 
 data Mod = Mod { residue, modulus :: !Integer }
   deriving (Eq, Read, Show)
@@ -32,7 +32,7 @@ chinese' (Mod n1 m1) (Mod n2 m2)
   = Just $! toMod (m2 `quot` d * n1 * v + m1 `quot` d * n2 * u) (m1 `quot` d * m2)
   | otherwise = Nothing
   where
-    (# d, u #) = gcdExtInteger m1 m2
+    (d, u, _) = integerGcde m1 m2
     v = (d - m1 * u) `quot` m2
 
 chinese :: [Mod] -> Maybe Integer
