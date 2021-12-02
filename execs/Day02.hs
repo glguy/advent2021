@@ -14,27 +14,40 @@ Implement a simple submarine piloting/aiming command interpreter.
 module Main (main) where
 
 import Advent.Format (format)
+import Data.Foldable (foldMap')
+import Numeric.LinearAlgebra hiding (format, C, (<>))
 
+-- | Three possible commands a submarine can recieve.
 data C = Cforward | Cdown | Cup
 
 pure [] -- puts C into view of format's reify below
 
+-- | >>> :main
+-- 1636725
+-- 1872757425
 main :: IO ()
 main =
   do inp <- [format|2 (@C %u%n)*|]
-     print (let (y, x   ) = foldl part1 (0,0  ) inp in y * x)
-     print (let (y, x, _) = foldl part2 (0,0,0) inp in y * x)
+     case foldMap' toS inp of
+       S dx dy1 dy2 ->
+         do print (dx*dy1)
+            print (dx*dy2)
 
-part1 :: (Int, Int) -> (C, Int) -> (Int, Int)
-part1 (y, x) (c, i) =
+-- | Computes the individual effect of a single instruction on a submarine.
+toS :: (C, Int) -> S
+toS (c,n) =
   case c of
-    Cforward -> (y,   x+i)
-    Cup      -> (y-i, x  )
-    Cdown    -> (y+i, x  )
+    Cup      -> S 0 (-n) 0
+    Cdown    -> S 0 n    0
+    Cforward -> S n 0    0
 
-part2 :: (Int, Int, Int) -> (C, Int) -> (Int, Int, Int)
-part2 (y, x, a) (c, i) =
-  case c of
-    Cforward -> (y+i*a, x+i, a  )
-    Cup      -> (y,     x,   a-i)
-    Cdown    -> (y,     x,   a+i)
+-- | Tracks the current state of the submarine's x displacement
+-- as well as the displacement for parts 1 and 2
+data S = S !Int !Int !Int -- dx dy1 dy2
+  deriving Show
+
+-- | A submarine that hasn't moved and is at the origin.
+instance Monoid S where mempty = S 0 0 0
+
+-- | Composes two submarine movements from left to right.
+instance Semigroup S where S x1 y1 z1 <> S x2 y2 z2 = S (x1+x2) (y1+y2) (z1+z2+y1*x2)
