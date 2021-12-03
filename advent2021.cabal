@@ -73,4 +73,3 @@ executable Day02
 executable Day03
   import:              day
   main-is:             Day03.hs
-  build-depends: containers, vector, split

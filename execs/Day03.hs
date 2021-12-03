@@ -14,20 +14,19 @@ in each position.
 -}
 module Main (main) where
 
-import Advent (cardinality)
+import Advent (count)
 import Advent.Format (format)
 import Data.List (foldl', transpose)
-import Data.Map qualified as Map
 
 -- | A bit
 data B = B0 | B1 deriving (Read, Show, Eq, Ord)
 
--- | Complement of the bit
+-- | Bit complement
 cmpl :: B -> B
 cmpl B0 = B1
 cmpl B1 = B0
 
-pure[] -- make B available for reify in format
+mempty -- make B available for reify in format
 
 main :: IO ()
 main =
@@ -35,15 +34,15 @@ main =
      print (harness pick1 inp)
      print (harness pick2 inp)
 
--- | Interpret list of booleans as a big-endian binary number
-toNum :: [B] -> Integer
-toNum = foldl' (\acc b -> 2*acc + case b of B0->0; B1->1) 0
+-- | Interpret list of bits as a big-endian binary number
+fromBits :: [B] -> Integer
+fromBits = foldl' (\acc b -> 2*acc + case b of B0->0; B1->1) 0
 
 -- | Use selection function to pick output bit by column
 pick1 :: ([B] -> B) -> [[B]] -> [B]
 pick1 sel xs = map sel (transpose xs)
 
--- | Use selection function to pick bit and keep those entries
+-- | Use selection function to filter entries by each bit column
 pick2 :: ([B] -> B) -> [[B]] -> [B]
 pick2 _ [x] = x
 pick2 sel xs = b : pick2 sel [ ys | y:ys <- xs, b == y]
@@ -54,9 +53,7 @@ pick2 sel xs = b : pick2 sel [ ys | y:ys <- xs, b == y]
 -- it on the selection function picking the most and least frequent
 -- values and then multiple those results together
 harness :: (([B] -> B) -> [[B]] -> [B]) -> [[B]] -> Integer
-harness f xs = toNum (f k xs) * toNum (f (cmpl . k) xs)
+harness f xs = fromBits (f h xs) * fromBits (f (cmpl . h) xs)
   where
-    look = Map.findWithDefault 0
-    h m | look B0 m <= look B1 m = B1
-        | otherwise              = B0
-    k = h . cardinality
+    h m | count (B0==) m <= count (B1==) m = B1
+        | otherwise                        = B0
