@@ -1,7 +1,7 @@
 {-# Language QuasiQuotes, TemplateHaskell #-}
 {-|
 Module      : Main
-Description : Day 22 solution
+Description : Day 2 solution
 Copyright   : (c) Eric Mertens, 2021
 License     : ISC
 Maintainer  : emertens@gmail.com
