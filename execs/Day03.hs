@@ -26,6 +26,10 @@ cmpl :: B -> B
 cmpl B0 = B1
 cmpl B1 = B0
 
+-- | Interpret list of bits as a big-endian binary number
+fromBits :: [B] -> Integer
+fromBits = foldl' (\acc b -> 2*acc + case b of B0->0; B1->1) 0
+
 mempty -- make B available for reify in format
 
 main :: IO ()
@@ -34,10 +38,6 @@ main =
      print (harness pick1 inp)
      print (harness pick2 inp)
 
--- | Interpret list of bits as a big-endian binary number
-fromBits :: [B] -> Integer
-fromBits = foldl' (\acc b -> 2*acc + case b of B0->0; B1->1) 0
-
 -- | Use selection function to pick output bit by column
 pick1 :: ([B] -> B) -> [[B]] -> [B]
 pick1 sel xs = map sel (transpose xs)
@@ -45,15 +45,18 @@ pick1 sel xs = map sel (transpose xs)
 -- | Use selection function to filter entries by each bit column
 pick2 :: ([B] -> B) -> [[B]] -> [B]
 pick2 _ [x] = x
-pick2 sel xs = b : pick2 sel [ ys | y:ys <- xs, b == y]
+pick2 sel xs = b : pick2 sel [ys | y:ys <- xs, b == y]
   where
-    b = sel (map head xs)
+    b = sel [y | y:_ <- xs]
 
 -- | Given a function that requires a selection function run
 -- it on the selection function picking the most and least frequent
 -- values and then multiple those results together
 harness :: (([B] -> B) -> [[B]] -> [B]) -> [[B]] -> Integer
-harness f xs = fromBits (f h xs) * fromBits (f (cmpl . h) xs)
-  where
-    h m | count (B0==) m <= count (B1==) m = B1
-        | otherwise                        = B0
+harness k xs = fromBits (k rule xs) * fromBits (k (cmpl . rule) xs)
+
+-- | Pick 1 when there are at least as many 1s as 0s
+rule :: [B] -> B
+rule xs
+  | count (B0==) xs <= count (B1==) xs = B1
+  | otherwise                          = B0

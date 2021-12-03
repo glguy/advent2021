@@ -2,18 +2,18 @@
 module Advent.Format (format) where
 
 import Advent (count, getRawInput)
-import Advent.Format.Lexer
+import Advent.Format.Lexer ( alexScanTokens )
 import Advent.Format.Parser (parseFormat)
-import Advent.Format.Types
+import Advent.Format.Types ( interesting, Format(..) )
 import Control.Applicative ((<|>), some)
-import Control.Monad
-import Data.Char
-import Data.Maybe
-import Data.Traversable
+import Control.Monad ( (<=<) )
+import Data.Char ( isDigit, isSpace, isUpper )
+import Data.Maybe ( listToMaybe )
+import Data.Traversable ( for )
 import Data.List (stripPrefix)
 import Data.Foldable (asum)
 import Language.Haskell.TH
-import Language.Haskell.TH.Quote
+import Language.Haskell.TH.Quote ( QuasiQuoter(..) )
 import Text.ParserCombinators.ReadP
 import Text.Read (readMaybe)
 
