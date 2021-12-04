@@ -27,11 +27,17 @@ cmpl B0 = B1
 cmpl B1 = B0
 
 -- | Interpret list of bits as a big-endian binary number
+--
+-- >>> fromBits [B1, B1, B0, B1]
+-- 13
 fromBits :: [B] -> Integer
 fromBits = foldl' (\acc b -> 2*acc + case b of B0->0; B1->1) 0
 
 mempty -- make B available for reify in format
 
+-- | >>> :main
+-- 749376
+-- 2372923
 main :: IO ()
 main =
   do inp <- [format|3 (@B*%n)*|]
