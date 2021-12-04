@@ -13,31 +13,38 @@ Today we played Bingo and picked the first and last winning cards
 -}
 module Main (main) where
 
-import Advent
 import Advent.Format (format)
 import Data.List (partition, transpose)
 
 type Board = [[Int]]
 
+-- | >>> :main
+-- 49686
+-- 26878
 main :: IO ()
 main =
-  do (calls, boxes) <- [format|4 %u&,%n%n((( *%u)+%n)+)&%n|]
-     let outcomes = play calls boxes
+  do (calls, boards) <- [format|4 %u&,%n(%n(( *%u)+%n)+)*|]
+     let outcomes = play calls boards
      print (head outcomes)
      print (last outcomes)
 
+-- | Given the called numbers and initial boards return a list of
+-- winning scores in order of winning.
 play :: [Int] -> [Board] -> [Int]
 play [] _ = []
 play (c:calls) boards =
-  case partition winner (map (mark c) boards) of
-    (winners, losers) -> [c * score w | w <- winners] ++ play calls losers
+  case partition isWinner (map (mark c) boards) of
+    (winners, losers) -> map (score c) winners ++ play calls losers
 
+-- | Mark off a called number on a board.
 mark :: Int -> Board -> Board
 mark c = map (map (\x -> if x == c then -1 else x))
 
-score :: Board -> Int
-score b = sum (filter (/= -1) (concat b))
+-- | Compute the final score for a board given the last call and unmarked numbers.
+score :: Int -> Board -> Int
+score c b = c * sum (filter (-1 /=) (concat b))
 
-winner :: Board -> Bool
-winner b = f b || f (transpose b)
-  where f = any (all (== -1))
+-- | Predicate for boards with a completed row or column
+isWinner :: Board -> Bool
+isWinner b = f b || f (transpose b)
+  where f = any (all (-1 ==))

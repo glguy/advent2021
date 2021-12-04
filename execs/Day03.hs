@@ -51,7 +51,7 @@ pick2 sel xs = b : pick2 sel [ys | y:ys <- xs, b == y]
 
 -- | Given a function that requires a selection function run
 -- it on the selection function picking the most and least frequent
--- values and then multiple those results together
+-- values and then multiply those results together
 harness :: (([B] -> B) -> [[B]] -> [B]) -> [[B]] -> Integer
 harness k xs = fromBits (k rule xs) * fromBits (k (cmpl . rule) xs)
 
