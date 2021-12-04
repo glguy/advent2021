@@ -45,10 +45,10 @@ library
   build-tool-depends: alex:alex, happy:happy
 
   build-depends:
-    base             ^>= 4.15,
+    base             ^>= 4.15 || ^>= 4.16,
     array            ^>= 0.5.4,
     containers       ^>= 0.6,
-    template-haskell ^>= 2.17,
+    template-haskell ^>= 2.17 || ^>= 2.18,
 
   if flag(bench)
     exposed-modules: Advent.Bench
