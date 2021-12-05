@@ -39,8 +39,3 @@ range :: Int -> Int -> [Int]
 range x y
   | x <= y    = [x .. y]
   | otherwise = [x, x-1 .. y]
-        
-
-
-
-
