@@ -79,14 +79,17 @@ toReadP s =
     Word      -> [| some (satisfy (not . isSpace)) |]
 
     Many x
+      | acceptsEmpty x -> fail ("Argument to * accepts ε: " ++ show x)
       | interesting x -> [|       many $(toReadP x) |]
       | otherwise     -> [| () <$ many $(toReadP x) |]
 
     Some x
+      | acceptsEmpty x -> fail ("Argument to + accepts ε: " ++ show x)
       | interesting x -> [|       some $(toReadP x) |]
       | otherwise     -> [| () <$ some $(toReadP x) |]
 
     SepBy x y
+      | acceptsEmpty x, acceptsEmpty y -> fail ("Both arguments to & accept ε:" ++ show (x,y))
       | interesting x -> [|       sepBy $(toReadP x) $(toReadP y) |]
       | otherwise     -> [| () <$ sepBy $(toReadP x) $(toReadP y) |]
 
@@ -147,3 +150,22 @@ enumParser nameStr =
      let parsers = [[| $(conE name) <$ string str |] | (name, str) <- entries]
 
      [| asum $(listE parsers) |]
+
+acceptsEmpty :: Format -> Bool
+acceptsEmpty x =
+  case x of
+    Many x              -> True
+    Some x              -> acceptsEmpty x
+    SepBy x _           -> acceptsEmpty x
+    Alt x y             -> acceptsEmpty x || acceptsEmpty y
+    Follow xs           -> all acceptsEmpty xs
+    UnsignedInteger     -> False
+    SignedInteger       -> False
+    UnsignedInt         -> False
+    SignedInt           -> False
+    Word                -> False
+    Char                -> False
+    Letter              -> False
+    Gather x            -> acceptsEmpty x
+    Named{}             -> False
+    Literal x           -> null x
