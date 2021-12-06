@@ -109,26 +109,18 @@ toReadP s =
         yp = toReadP y
 
     Empty -> [| pure () |]
-    Follow x1 x2
-      | n <= 1 -> foldl (\l r ->
-                            let r' = toReadP r in
-                            if interesting r then [| $l *> $r' |] else [| $l <* $r' |]
-                       ) (toReadP x) xs
+    Follow x1 x2 ->
+      case [(interesting x, toReadP x) | x <- follows x1 (follows x2 [])] of
+        [] -> [| pure () |]
+        (ix,x):xs
+          | n <= 1    -> foldl follow1 x xs
+          | ix        -> foldl follow [| $(conE (tupleDataName n)) <$> $x |] xs
+          | otherwise -> foldl follow [| $(conE (tupleDataName n)) <$  $x |] xs
+          where
+            n               = Advent.count fst ((ix,x):xs)
+            follow1 l (i,r) = if i then [| $l  *> $r |] else [| $l <* $r |]
+            follow  l (i,r) = if i then [| $l <*> $r |] else [| $l <* $r |]
 
-      | interesting x ->
-        foldl (\l r ->
-                 let r' = toReadP r in
-                 if interesting r then [| $l <*> $r' |] else [| $l <* $r' |]
-              ) [| $(conE (tupleDataName n)) <$> $(toReadP x) |] xs
-
-      | otherwise ->
-        foldl (\l r ->
-                 let r' = toReadP r in
-                 if interesting r then [| $l <*> $r' |] else [| $l <* $r' |]
-              ) [| $(conE (tupleDataName n)) <$ $(toReadP x) |] xs
-      where
-        x:xs = follows x1 (follows x2 [])
-        n    = Advent.count interesting (x:xs)
 
 -- | Prefix a list of format strings with a format string.
 -- If the given list has all the topmost 'Follow' constructors
