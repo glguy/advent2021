@@ -15,7 +15,6 @@ module Main (main) where
 
 import Advent (cardinality, count)
 import Advent.Format (format)
-import Data.List (group, sort)
 
 -- | >>> :main
 -- 8060
