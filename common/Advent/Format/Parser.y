@@ -1,33 +1,35 @@
 {
-module Advent.Format.Parser where
+module Advent.Format.Parser (parseFormat, ParseError(..)) where
 
 import Advent.Format.Types
+import Advent.Format.Lexer (AlexPosn(..))
+
 }
 
-%tokentype                      { Token                 }
+%tokentype                      { (AlexPosn, Token)     }
 
 %token
-'('                             { TOpenGroup            }
-')'                             { TCloseGroup           }
-'*'                             { TMany                 }
-'+'                             { TSome                 }
-'&'                             { TSepBy                }
-'|'                             { TAlt                  }
-'!'                             { TBang                 }
-'%a'                            { TAnyLetter            }
-'%c'                            { TAnyChar              }
-'%s'                            { TAnyWord              }
-'%u'                            { TUnsignedInt          }
-'%d'                            { TSignedInt            }
-'%lu'                           { TUnsignedInteger      }
-'%ld'                           { TSignedInteger        }
-LIT                             { TLiteral $$           }
-NAME                            { TAt $$                }
+'('                             { ($$, TOpenGroup)      }
+')'                             { (_, TCloseGroup)      }
+'*'                             { (_, TMany)            }
+'+'                             { (_, TSome)            }
+'&'                             { (_, TSepBy)           }
+'|'                             { (_, TAlt)             }
+'!'                             { (_, TBang)            }
+'%a'                            { (_, TAnyLetter)       }
+'%c'                            { (_, TAnyChar)         }
+'%s'                            { (_, TAnyWord)         }
+'%u'                            { (_, TUnsignedInt)     }
+'%d'                            { (_, TSignedInt)       }
+'%lu'                           { (_, TUnsignedInteger) }
+'%ld'                           { (_, TSignedInteger)   }
+LIT                             { (_, TLiteral $$)      }
+NAME                            { (_, TAt $$)           }
 
 %name parseFormat format
 
-%monad                          { Either [Token]        }
-%error                          { Left                  }
+%monad                          { Either ParseError     }
+%error                          { parseError            }
 
 %left '&' '*' '+' '!'
 
@@ -38,11 +40,12 @@ format
   | format '|' atoms            { Alt $1 $3             }
 
 atoms
-  :                             { Follow []             }
-  | atoms atom                  { follow $1 $2          }
+  :                             { Empty                 }
+  | atoms atom                  { Follow $1 $2          }
 
 atom
   : '(' format ')'              { $2                    }
+  | '(' format error            {% Left (Unclosed $1)   }
   | '%u'                        { UnsignedInt           }
   | '%d'                        { SignedInt             }
   | '%lu'                       { UnsignedInteger       }
@@ -58,4 +61,12 @@ atom
   | NAME                        { Named $1              }
 
 {
+data ParseError
+  = Unclosed AlexPosn
+  | UnexpectedEOF
+  | UnexpectedToken AlexPosn Token
+
+parseError :: [(AlexPosn, Token)] -> Either ParseError a
+parseError ((p,t):_) = Left (UnexpectedToken p t)
+parseError [] = Left UnexpectedEOF
 }

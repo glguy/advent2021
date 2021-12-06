@@ -2,9 +2,9 @@
 module Advent.Format (format) where
 
 import Advent (count, getRawInput)
-import Advent.Format.Lexer ( alexScanTokens )
-import Advent.Format.Parser (parseFormat)
-import Advent.Format.Types ( interesting, Format(..) )
+import Advent.Format.Lexer ( alexScanTokens, AlexPosn(..) )
+import Advent.Format.Parser (parseFormat, ParseError(..) )
+import Advent.Format.Types ( interesting, Format(..), acceptsEmpty, showFormat, showToken )
 import Control.Applicative ((<|>), some)
 import Control.Monad ( (<=<) )
 import Data.Char ( isDigit, isSpace, isUpper )
@@ -20,8 +20,13 @@ import Text.Read (readMaybe)
 parse :: String -> Q Format
 parse txt =
   case parseFormat (alexScanTokens txt) of
-    Left e -> fail ("Format string parse failure: " ++ show e)
-    Right fmt -> pure fmt
+    Right fmt                -> pure fmt
+    Left (Unclosed p)        -> failAt p "Unclosed parenthesis"
+    Left (UnexpectedToken p t) -> failAt p ("Unexpected token " ++ showToken t)
+    Left UnexpectedEOF       -> fail "Format parse error, unexpected end-of-input"
+
+failAt :: AlexPosn -> String -> Q a
+failAt (AlexPn _ line col) msg = fail ("Format parse error at " ++ show line ++ ":" ++ show col ++ ", " ++ msg)
 
 format :: QuasiQuoter
 format = QuasiQuoter
@@ -60,8 +65,7 @@ makeParser n str =
 toReadP :: Format -> ExpQ
 toReadP s =
   case s of
-    Literal xs_ -> [| () <$ string xs |]
-      where xs = reverse xs_
+    Literal xs -> [| () <$ string xs |]
 
     Gather p -> [| fst <$> gather $(toReadP p) |]
 
@@ -79,17 +83,17 @@ toReadP s =
     Word      -> [| some (satisfy (not . isSpace)) |]
 
     Many x
-      | acceptsEmpty x -> fail ("Argument to * accepts ε: " ++ show x)
+      | acceptsEmpty x -> fail ("Argument to * accepts ε: " ++ showFormat 0 s "")
       | interesting x -> [|       many $(toReadP x) |]
       | otherwise     -> [| () <$ many $(toReadP x) |]
 
     Some x
-      | acceptsEmpty x -> fail ("Argument to + accepts ε: " ++ show x)
+      | acceptsEmpty x -> fail ("Argument to + accepts ε: " ++ showFormat 0 s "")
       | interesting x -> [|       some $(toReadP x) |]
       | otherwise     -> [| () <$ some $(toReadP x) |]
 
     SepBy x y
-      | acceptsEmpty x, acceptsEmpty y -> fail ("Both arguments to & accept ε:" ++ show (x,y))
+      | acceptsEmpty x, acceptsEmpty y -> fail ("Both arguments to & accept ε: " ++ showFormat 0 s "")
       | interesting x -> [|       sepBy $(toReadP x) $(toReadP y) |]
       | otherwise     -> [| () <$ sepBy $(toReadP x) $(toReadP y) |]
 
@@ -104,8 +108,8 @@ toReadP s =
         xp = toReadP x
         yp = toReadP y
 
-    Follow [] -> [| pure () |]
-    Follow xs_
+    Empty -> [| pure () |]
+    Follow x1 x2
       | n <= 1 -> foldl (\l r ->
                             let r' = toReadP r in
                             if interesting r then [| $l *> $r' |] else [| $l <* $r' |]
@@ -123,10 +127,18 @@ toReadP s =
                  if interesting r then [| $l <*> $r' |] else [| $l <* $r' |]
               ) [| $(conE (tupleDataName n)) <$ $(toReadP x) |] xs
       where
-        x:xs = reverse xs_
+        x:xs = follows x1 (follows x2 [])
         n    = Advent.count interesting (x:xs)
 
-
+-- | Prefix a list of format strings with a format string.
+-- If the given list has all the topmost 'Follow' constructors
+-- removed, the output list will as well. Any consecutive literals found
+-- while flattening will be combined.
+follows :: Format -> [Format] -> [Format]
+follows (Follow x y) zs               = follows x (follows y zs)
+follows Empty        zs               = zs
+follows (Literal x)  (Literal y : zs) = follows (Literal (x ++ y)) zs
+follows x            zs               = x : zs
 
 enumParser :: String -> ExpQ
 enumParser nameStr =
@@ -150,22 +162,3 @@ enumParser nameStr =
      let parsers = [[| $(conE name) <$ string str |] | (name, str) <- entries]
 
      [| asum $(listE parsers) |]
-
-acceptsEmpty :: Format -> Bool
-acceptsEmpty x =
-  case x of
-    Many x              -> True
-    Some x              -> acceptsEmpty x
-    SepBy x _           -> acceptsEmpty x
-    Alt x y             -> acceptsEmpty x || acceptsEmpty y
-    Follow xs           -> all acceptsEmpty xs
-    UnsignedInteger     -> False
-    SignedInteger       -> False
-    UnsignedInt         -> False
-    SignedInt           -> False
-    Word                -> False
-    Char                -> False
-    Letter              -> False
-    Gather x            -> acceptsEmpty x
-    Named{}             -> False
-    Literal x           -> null x
