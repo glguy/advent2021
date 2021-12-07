@@ -129,3 +129,8 @@ showToken t =
     TAt x             -> "@" ++ x
     TBang             -> "!"
     TLiteral c        -> showLiteral c ""
+
+follow :: Format -> Format -> Format
+follow Empty x = x
+follow x Empty = x
+follow x y = Follow x y

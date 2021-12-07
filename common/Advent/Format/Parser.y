@@ -41,7 +41,7 @@ format
 
 atoms
   :                             { Empty                 }
-  | atoms atom                  { Follow $1 $2          }
+  | atoms atom                  { follow $1 $2          }
 
 atom
   : '(' format ')'              { $2                    }
@@ -65,6 +65,7 @@ data ParseError
   = Unclosed AlexPosn
   | UnexpectedEOF
   | UnexpectedToken AlexPosn Token
+  deriving Show
 
 parseError :: [(AlexPosn, Token)] -> Either ParseError a
 parseError ((p,t):_) = Left (UnexpectedToken p t)

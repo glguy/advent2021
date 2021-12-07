@@ -18,6 +18,9 @@ import Advent.Format (format)
 import Data.Map (Map)
 import Data.Map qualified as Map
 
+-- | >>> :main
+-- 376194
+-- 1693022481538
 main :: IO ()
 main =
   do inp <- cardinality <$> [format|6 %u&,%n|]
@@ -25,7 +28,7 @@ main =
      print (sum (iterate step inp !! 256))
 
 step :: Map Int Int -> Map Int Int 
-step xs = Map.fromListWith (+) [ elt | (d,n) <- Map.toList xs, elt <- tick d n ]
+step xs = Map.fromListWith (+) (tick =<< Map.toList xs)
   where
-    tick 0 n = [(6,n), (8,n)]
-    tick d n = [(d-1, n)]
+    tick (0,n) = [(6,n), (8,n)]
+    tick (d,n) = [(d-1,n)]

@@ -110,14 +110,17 @@ toReadP s =
     _ ->
       case [(interesting x, toReadP x) | x <- follows s []] of
         [] -> [| pure () |]
-        (ix,x):xs
-          | n <= 1    -> foldl follow1 x xs
-          | ix        -> foldl follow [| $(conE (tupleDataName n)) <$> $x |] xs
-          | otherwise -> foldl follow [| $(conE (tupleDataName n)) <$  $x |] xs
+        xxs@((ix,x):xs)
+          | n == 0    -> foldl apply0 x xs
+          | n <= 1    -> foldl apply1 x xs
+          | ix        -> foldl applyN [| $tup <$> $x |] xs
+          | otherwise -> foldl applyN [| $tup <$  $x |] xs
           where
-            n               = Advent.count fst ((ix,x):xs)
-            follow1 l (i,r) = if i then [| $l  *> $r |] else [| $l <* $r |]
-            follow  l (i,r) = if i then [| $l <*> $r |] else [| $l <* $r |]
+            tup            = conE (tupleDataName n)
+            n              = Advent.count fst xxs
+            apply0 l (_,r) = [| $l *> $r |]
+            apply1 l (i,r) = if i then [| $l  *> $r |] else [| $l <* $r |]
+            applyN l (i,r) = if i then [| $l <*> $r |] else [| $l <* $r |]
 
 toType :: Format -> TypeQ
 toType fmt =
