@@ -11,7 +11,6 @@ import Data.Char ( isDigit, isSpace, isUpper )
 import Data.Maybe ( listToMaybe )
 import Data.Traversable ( for )
 import Data.List (stripPrefix)
-import Data.Foldable (asum)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote ( QuasiQuoter(..) )
 import Text.ParserCombinators.ReadP
@@ -32,7 +31,7 @@ format :: QuasiQuoter
 format = QuasiQuoter
   { quoteExp  = uncurry makeParser <=< prepare
   , quotePat  = \_ -> fail "format: patterns not supported"
-  , quoteType = \_ -> fail "format: types not supported"
+  , quoteType = toType <=< parse . snd <=< prepare
   , quoteDec  = \_ -> fail "format: declarations not supported"
   }
 
@@ -108,9 +107,8 @@ toReadP s =
         xp = toReadP x
         yp = toReadP y
 
-    Empty -> [| pure () |]
-    Follow x1 x2 ->
-      case [(interesting x, toReadP x) | x <- follows x1 (follows x2 [])] of
+    _ ->
+      case [(interesting x, toReadP x) | x <- follows s []] of
         [] -> [| pure () |]
         (ix,x):xs
           | n <= 1    -> foldl follow1 x xs
@@ -121,6 +119,57 @@ toReadP s =
             follow1 l (i,r) = if i then [| $l  *> $r |] else [| $l <* $r |]
             follow  l (i,r) = if i then [| $l <*> $r |] else [| $l <* $r |]
 
+toType :: Format -> TypeQ
+toType fmt =
+  case fmt of
+    Literal xs -> [t| () |]
+
+    Gather p -> [t| String |]
+
+    Named n
+      | isUpper (head n) -> conT (mkName n)
+      | otherwise -> fail "toType: not implemented for variable yet"
+
+    UnsignedInteger -> [t| Integer |]
+    SignedInteger   -> [t| Integer |]
+    UnsignedInt     -> [t| Int |]
+    SignedInt       -> [t| Int |]
+
+    Char      -> [t| Char |]
+    Letter    -> [t| Char |]
+    Word      -> [t| String |]
+
+    Many x
+      | acceptsEmpty x -> fail ("Argument to * accepts ε: " ++ showFormat 0 fmt "")
+      | interesting x -> [t| [$(toType x)] |]
+      | otherwise     -> [t| () |]
+
+    Some x
+      | acceptsEmpty x -> fail ("Argument to + accepts ε: " ++ showFormat 0 fmt "")
+      | interesting x -> [t| [$(toType x)] |]
+      | otherwise     -> [t| () |]
+
+    SepBy x y
+      | acceptsEmpty x, acceptsEmpty y -> fail ("Both arguments to & accept ε: " ++ showFormat 0 fmt "")
+      | interesting x -> [t| [$(toType x)] |]
+      | otherwise     -> [t| () |]
+
+    Alt x y
+      | xi, yi    -> [t| Either $xt $yt |]
+      | xi        -> [t| Maybe $xt |]
+      |     yi    -> [t| Maybe $yt |]
+      | otherwise -> [t| () |]
+      where
+        xi = interesting x
+        yi = interesting y
+        xt = toType x
+        yt = toType y
+
+    _ ->
+      case [toType x | x <- follows fmt [], interesting x] of
+        [] -> [t| () |]
+        [t] -> t
+        ts -> foldl appT (tupleT (length ts)) ts
 
 -- | Prefix a list of format strings with a format string.
 -- If the given list has all the topmost 'Follow' constructors
@@ -153,4 +202,4 @@ enumParser nameStr =
 
      let parsers = [[| $(conE name) <$ string str |] | (name, str) <- entries]
 
-     [| asum $(listE parsers) |]
+     [| choice $(listE parsers) |]
