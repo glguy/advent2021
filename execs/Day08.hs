@@ -13,13 +13,15 @@ Figure out how the miswired segment display works.
 -}
 module Main (main) where
 
-import Advent ( count )
+import Advent (count)
 import Advent.Format (format)
-
-import Data.List ( foldl', permutations, sort )
+import Data.List (foldl', permutations, sort)
 import Data.Map (Map)
 import Data.Map qualified as Map
 
+-- | >>> :main
+-- 355
+-- 983030
 main :: IO ()
 main = do
   inp <- [format|8 (%s&  %| %s& %n)*|]
@@ -27,6 +29,8 @@ main = do
   print (count (`elem` [1,4,7,8]) (concat outs))
   print (sum (map toInt outs))
 
+-- | >>> toInt [1,2,3]
+-- 123
 toInt :: [Int] -> Int
 toInt = foldl' (\acc x -> 10 * acc + x) 0
 
@@ -36,13 +40,12 @@ wires = ['a'..'g']
 segments :: Map String Int
 segments = Map.fromList (zip ["abcefg","cf","acdeg","acdfg","bcdf","abdfg","abdefg","acf","abcdefg","abcdfg"] [0..9])
 
-decode :: String -> Int
-decode x = segments Map.! x
-
+-- | Given a list of segment examples and outputs decode the outputs.
 solve :: ([String], [String]) -> [Int]
 solve (xs, ys) = head
-  [ [decode (rewire y) | y <- ys]
-  | assignment <- Map.fromList . zip wires <$> permutations wires
-  , let rewire x = sort (map (assignment Map.!) x)
-  , all (\z -> rewire z `Map.member` segments) xs
+  [ out
+  | wires' <- permutations wires
+  , let assignment = Map.fromList (zip wires wires')
+  , let rewire x = Map.lookup (sort (map (assignment Map.!) x)) segments
+  , Just out <- [traverse rewire xs *> traverse rewire ys]
   ]
