@@ -1,4 +1,4 @@
-{-# Language QuasiQuotes #-}
+{-# Language QuasiQuotes, ParallelListComp #-}
 {-|
 Module      : Main
 Description : Day 1 solution
@@ -34,4 +34,4 @@ solve ::
   Int {- ^ window size -} ->
   [Int] {- ^ measurements -} ->
   Int {- ^ count of ascending pairs -}
-solve n input = count (uncurry (<)) (zip input (drop n input))
+solve n input = count id [x < y | x <- input | y <- drop n input]

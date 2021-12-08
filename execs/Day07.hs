@@ -16,6 +16,9 @@ module Main (main) where
 import Advent.Format (format)
 import Data.List (sort)
 
+-- | >>> :main
+-- 336721
+-- 91638945
 main :: IO ()
 main =
   do inp <- [format|7 %u&,%n|]
@@ -23,8 +26,9 @@ main =
      let median = sort inp !! (length inp `div` 2)
      print (sum [abs (x - median) | x <- inp])
 
-     let (lo,hi) = (minimum inp, maximum inp)
-     print (minimum [sum [triangle (abs (x-y)) | x <- inp] | y <- [lo..hi]])
+     let mean = sum inp `div` length inp
+     print (minimum [sum [triangle (abs (x-a)) | x <- inp] | a <- [mean, mean+1]])
 
+-- | Sum of numbers from 1 to @n@
 triangle :: Int -> Int
 triangle i = i * (i+1) `div` 2
