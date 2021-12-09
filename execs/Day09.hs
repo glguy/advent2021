@@ -29,11 +29,11 @@ type BasinIds = Array Coord (Maybe Coord)
 -- 964712
 main :: IO ()
 main =
-  do  heights <- heightArray <$> getInputArray 9
-      let basinIds = heightsToBasinIds heights
+  do heights <- heightArray <$> getInputArray 9
+     let basinIds = heightsToBasinIds heights
 
-      print (sum [1+h | (c, Just h) <- assocs heights, Just c == basinIds!c])
-      print (product (top 3 (basinSizes basinIds)))
+     print (sum [1+h | (c, Just h) <- assocs heights, Just c == basinIds!c])
+     print (product (top 3 (basinSizes basinIds)))
 
 -- | Returns the @n@ largest elements of a list
 top :: Ord a => Int -> [a] -> [a]
