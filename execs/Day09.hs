@@ -1,4 +1,3 @@
-{-# Language ImportQualifiedPost, QuasiQuotes #-}
 {-|
 Module      : Main
 Description : Day 9 solution
