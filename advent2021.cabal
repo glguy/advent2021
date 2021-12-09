@@ -110,4 +110,4 @@ executable Day08
 executable Day09
   import:              day
   main-is:             Day09.hs
-  build-depends:       containers
+  build-depends:       array
