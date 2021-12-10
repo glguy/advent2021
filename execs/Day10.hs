@@ -14,6 +14,9 @@ import Advent (getInputLines)
 import Data.Either (partitionEithers)
 import Data.List (sort)
 
+-- | >>> :main
+-- 392043
+-- 1605968119
 main :: IO ()
 main =
   do inp <- getInputLines 10
@@ -21,6 +24,7 @@ main =
      print (sum (map cost1 p1))
      print (middle (map cost2 p2))
 
+-- | Return the median of an odd-length list
 middle :: Ord a => [a] -> a
 middle xs = sort xs !! (length xs `div` 2)
 
