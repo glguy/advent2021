@@ -25,13 +25,13 @@ middle :: Ord a => [a] -> a
 middle xs = sort xs !! (length xs `div` 2)
 
 validate :: String -> String -> Either Char String
-validate (x:xs) (y:ys) | x==y                       = validate xs ys
-validate xs     (y:ys) | Just x <- lookup y backets = validate (x:xs) ys
-validate _      (y:_ )                              = Left y
-validate xs     []                                  = Right xs
+validate (x:xs) (y:ys) | x == y                      = validate xs ys
+validate xs     (y:ys) | Just x <- lookup y brackets = validate (x:xs) ys
+validate _      (y:_ )                               = Left y
+validate xs     []                                   = Right xs
 
-backets :: [(Char,Char)]
-backets = [('(',')'),('[',']'),('{','}'),('<','>')]
+brackets :: [(Char,Char)]
+brackets = [('(',')'),('[',']'),('{','}'),('<','>')]
 
 cost1 :: Char -> Int
 cost1 ')' = 3
