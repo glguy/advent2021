@@ -10,7 +10,7 @@ Maintainer  : emertens@gmail.com
 -}
 module Main (main) where
 
-import Advent (getInputLines)
+import Advent (getInputLines, fromDigits)
 import Data.Either (partitionEithers)
 import Data.List (sort)
 
@@ -29,13 +29,17 @@ middle :: Ord a => [a] -> a
 middle xs = sort xs !! (length xs `div` 2)
 
 validate :: String -> String -> Either Char String
-validate (x:xs) (y:ys) | x == y                      = validate xs ys
-validate xs     (y:ys) | Just x <- lookup y brackets = validate (x:xs) ys
-validate _      (y:_ )                               = Left y
-validate xs     []                                   = Right xs
+validate (x:xs) (y:ys) | x == y            = validate xs ys
+validate xs     (y:ys) | Just x <- close y = validate (x:xs) ys
+validate _      (y:_ )                     = Left y
+validate xs     []                         = Right xs
 
-brackets :: [(Char,Char)]
-brackets = [('(',')'),('[',']'),('{','}'),('<','>')]
+close :: Char -> Maybe Char
+close '(' = Just ')'
+close '[' = Just ']'
+close '{' = Just '}'
+close '<' = Just '>'
+close _   = Nothing
 
 cost1 :: Char -> Int
 cost1 ')' = 3
@@ -45,10 +49,11 @@ cost1 '>' = 25137
 cost1 x   = error ("cost1: bad input " ++ show x)
 
 cost2 :: String -> Int
-cost2 = foldl (\acc x -> acc * 5 + f x) 0
-  where
-    f ')' =  1
-    f ']' =  2
-    f '}' =  3
-    f '>' =  4
-    f x   = error ("cost2: bad input " ++ show x)
+cost2 = fromDigits 5 . map cost2'
+
+cost2' :: Char -> Int
+cost2' ')' =  1
+cost2' ']' =  2
+cost2' '}' =  3
+cost2' '>' =  4
+cost2' x   = error ("cost2': bad input " ++ show x)

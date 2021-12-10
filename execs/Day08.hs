@@ -13,9 +13,9 @@ Figure out how the miswired segment display works.
 -}
 module Main (main) where
 
-import Advent (count)
+import Advent (count, fromDigits)
 import Advent.Format (format)
-import Data.List (foldl', permutations, sort)
+import Data.List (permutations, sort)
 import Data.Map (Map)
 import Data.Map qualified as Map
 
@@ -27,12 +27,7 @@ main = do
   inp <- [format|8 (%s&  %| %s& %n)*|]
   let outs = map solve inp
   print (count (`elem` [1,4,7,8]) (concat outs))
-  print (sum (map toInt outs))
-
--- | >>> toInt [1,2,3]
--- 123
-toInt :: [Int] -> Int
-toInt = foldl' (\acc x -> 10 * acc + x) 0
+  print (sum (map (fromDigits 10) outs))
 
 wires :: String
 wires = ['a'..'g']

@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost, QuasiQuotes, TemplateHaskell #-}
+{-# Language ImportQualifiedPost, BlockArguments, LambdaCase, QuasiQuotes, TemplateHaskell #-}
 {-|
 Module      : Main
 Description : Day 3 solution
@@ -14,9 +14,9 @@ in each position.
 -}
 module Main (main) where
 
-import Advent (count)
+import Advent (count, fromDigits)
 import Advent.Format (format)
-import Data.List (foldl', transpose)
+import Data.List (transpose)
 
 -- | A bit
 data B = B0 | B1 deriving (Read, Show, Eq, Ord)
@@ -31,7 +31,7 @@ cmpl B1 = B0
 -- >>> fromBits [B1, B1, B0, B1]
 -- 13
 fromBits :: [B] -> Integer
-fromBits = foldl' (\acc b -> 2*acc + case b of B0->0; B1->1) 0
+fromBits = fromDigits 2 . map \case B0->0; B1->1
 
 mempty -- make B available for reify in format
 

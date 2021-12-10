@@ -146,3 +146,38 @@ uniqueAssignment m =
       [ (k,v) : soln
       | v <- Set.toList vs
       , soln <- uniqueAssignment (fmap (Set.delete v) <$> rest)]
+
+-- | Convert a big-endian list of digits to a single number.
+--
+-- >>> fromDigits 10 [1,2,3,4]
+-- 1234
+--
+-- >>> fromDigits 2 [12]
+-- 12
+--
+-- >>> fromDigits 10 []
+-- 0
+fromDigits :: Integral a => a -> [a] -> a
+fromDigits base
+  | base < 2  = error "fromDigits: bad base"
+  | otherwise = foldl' (\acc x -> acc * base + x) 0
+
+-- | Convert a number to a list of digits in a given radix.
+--
+-- >>> toDigits 2 12
+-- [1,1,0,0]
+--
+-- >>> toDigits 10 1234
+-- [1,2,3,4]
+--
+-- >>> toDigits 10 0
+-- []
+toDigits :: Integral a => a -> a -> [a]
+toDigits base x
+  | base < 2  = error "toDigits: bad base"
+  | x < 0     = error "toDigits: negative number"
+  | otherwise = go [] x
+  where
+    go xs 0 = xs
+    go xs n = case quotRem n base of
+                (n', digit) -> go (digit:xs) n'
