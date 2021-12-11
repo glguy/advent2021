@@ -11,15 +11,13 @@ Maintainer  : emertens@gmail.com
 -}
 module Main (main) where
 
-import Advent (getInputLines)
+import Advent (count, getInputLines)
 import Advent.Coord (Coord(..), neighbors)
 import Data.Char (digitToInt)
 import Data.List (elemIndex, unfoldr)
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromJust)
-import Data.Set (Set)
-import Data.Set qualified as Set
 
 main :: IO ()
 main =
@@ -33,15 +31,13 @@ simulate :: Map Coord Int -> [Int]
 simulate = unfoldr (Just . step)
 
 step :: Map Coord Int -> (Int, Map Coord Int)
-step m =
-  case foldl flash (Set.empty, fmap (1+) m) [k | (k,9) <- Map.toList m] of
-    (flashed, m') -> (Set.size flashed,m')
+step m = (count (0==) m', m')
+  where m' = foldl flash (fmap (1+) m) [k | (k,9) <- Map.toList m]
 
-flash :: (Set Coord, Map Coord Int) -> Coord -> (Set Coord, Map Coord Int)
-flash (flashed, m) x
-  | Set.notMember x flashed
-  , Just e <- Map.lookup x m =
-      if e >= 9
-        then foldl flash (Set.insert x flashed, Map.insert x 0 m) (neighbors x)
-        else (flashed, Map.insert x (e+1) m)
-  | otherwise = (flashed, m)
+flash :: (Map Coord Int) -> Coord -> Map Coord Int
+flash m x =
+  case Map.lookup x m of
+    Just e
+      | e > 8 -> foldl flash (Map.insert x 0 m) (neighbors x)
+      | e > 0 -> Map.insert x (e+1) m
+    _         -> m
