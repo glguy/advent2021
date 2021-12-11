@@ -35,17 +35,13 @@ simulate = unfoldr (Just . step)
 step :: Map Coord Int -> (Int, Map Coord Int)
 step m =
   case foldl flash (Set.empty, fmap (1+) m) [k | (k,9) <- Map.toList m] of
-    (flashed, m') -> (Set.size flashed, dim m')
-
-dim :: Map Coord Int -> Map Coord Int
-dim = fmap (\e -> if e > 9 then 0 else e)
+    (flashed, m') -> (Set.size flashed,m')
 
 flash :: (Set Coord, Map Coord Int) -> Coord -> (Set Coord, Map Coord Int)
 flash (flashed, m) x
   | Set.notMember x flashed
-  , Just e <- Map.lookup x m = 
-      let m' = Map.insert x (e+1) m in
+  , Just e <- Map.lookup x m =
       if e >= 9
-        then foldl flash (Set.insert x flashed, m') (neighbors x)
-        else (flashed, m')
+        then foldl flash (Set.insert x flashed, Map.insert x 0 m) (neighbors x)
+        else (flashed, Map.insert x (e+1) m)
   | otherwise = (flashed, m)
