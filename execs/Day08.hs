@@ -13,7 +13,7 @@ Figure out how the miswired segment display works.
 -}
 module Main (main) where
 
-import Advent (count, fromDigits)
+import Advent (countBy, fromDigits)
 import Advent.Format (format)
 import Data.List (permutations, sort)
 import Data.Map (Map)
@@ -26,7 +26,7 @@ main :: IO ()
 main = do
   inp <- [format|8 (%s&  %| %s& %n)*|]
   let outs = map solve inp
-  print (count (`elem` [1,4,7,8]) (concat outs))
+  print (countBy (`elem` [1,4,7,8]) (concat outs))
   print (sum (map (fromDigits 10) outs))
 
 wires :: String

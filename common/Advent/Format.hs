@@ -1,7 +1,7 @@
 {-# Language BlockArguments, TemplateHaskell #-}
 module Advent.Format (format) where
 
-import Advent (count, getRawInput)
+import Advent (countBy, getRawInput)
 import Advent.Format.Lexer ( alexScanTokens, AlexPosn(..) )
 import Advent.Format.Parser (parseFormat, ParseError(..) )
 import Advent.Format.Types ( interesting, Format(..), acceptsEmpty, showFormat, showToken )
@@ -117,7 +117,7 @@ toReadP s =
           | otherwise -> foldl applyN [| $tup <$  $x |] xs
           where
             tup            = conE (tupleDataName n)
-            n              = Advent.count fst xxs
+            n              = countBy fst xxs
             apply0 l (_,r) = [| $l *> $r |]
             apply1 l (i,r) = if i then [| $l  *> $r |] else [| $l <* $r |]
             applyN l (i,r) = if i then [| $l <*> $r |] else [| $l <* $r |]

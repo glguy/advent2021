@@ -13,7 +13,7 @@ The input is a bunch of segments; count intersections.
 -}
 module Main (main) where
 
-import Advent (cardinality, count)
+import Advent (frequencies, countBy)
 import Advent.Format (format)
 
 -- | >>> :main
@@ -27,7 +27,7 @@ main =
 
 -- | Compute the number of points covered by more than one segment
 solve :: [(Int, Int, Int, Int)] -> Int
-solve = count (> 1) . cardinality . concatMap points
+solve = countBy (> 1) . frequencies . concatMap points
 
 -- | Predicate for straight segments
 isStraight :: (Int, Int, Int, Int) -> Bool

@@ -48,9 +48,12 @@ getInputMap i =
      pure $! SMap.fromList (coordLines xs)
 
 -- | Count the number of elements in a foldable value that satisfy a predicate.
-count :: Foldable t => (a -> Bool) -> t a -> Int
-count p = foldl' (\acc x -> if p x then acc+1 else acc) 0
+count :: (Foldable f, Eq a) => a -> f a -> Int
+count x = countBy (x ==)
 
+-- | Count the number of elements in a foldable value that satisfy a predicate.
+countBy :: Foldable f => (a -> Bool) -> f a -> Int
+countBy p = foldl' (\acc x -> if p x then acc+1 else acc) 0
 
 -- | Return true when the whole list is comprised of equal elements.
 --
@@ -99,10 +102,10 @@ minimumMaybe xs
 
 -- | Compute the number of occurrences of the elements in a given list.
 --
--- >>> cardinality "bababc"
+-- >>> frequencies "bababc"
 -- fromList [('a',2),('b',3),('c',1)]
-cardinality :: Ord a => [a] -> Map a Int
-cardinality xs = SMap.fromListWith (+) [ (x,1) | x <- xs ]
+frequencies :: (Foldable f, Ord a) => f a -> Map a Int
+frequencies xs = SMap.fromListWith (+) [(x,1) | x <- toList xs]
 
 -- | Compose a list of functions together
 --

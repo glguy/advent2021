@@ -13,7 +13,7 @@ Count the number of increasing pairs of measurements.
 -}
 module Main where
 
-import Advent (count)
+import Advent (countBy)
 import Advent.Format (format)
 
 -- | >>> :main
@@ -34,4 +34,4 @@ solve ::
   Int {- ^ window size -} ->
   [Int] {- ^ measurements -} ->
   Int {- ^ count of ascending pairs -}
-solve n input = count id [x < y | x <- input | y <- drop n input]
+solve n input = countBy id [x < y | x <- input | y <- drop n input]

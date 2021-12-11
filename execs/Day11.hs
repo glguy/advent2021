@@ -33,7 +33,7 @@ main =
 
 -- | Initial grid state to flashes per step
 simulate :: Map Coord Int -> [Int]
-simulate = map (count (0 ==)) . tail . iterate step
+simulate = map (count 0) . tail . iterate step
 
 -- | Advance the state of the world one time step
 step :: Map Coord Int -> Map Coord Int

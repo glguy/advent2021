@@ -13,7 +13,7 @@ Multiplying fish!
 -}
 module Main (main) where
 
-import Advent (cardinality)
+import Advent (frequencies)
 import Advent.Format (format)
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -23,7 +23,7 @@ import Data.Map qualified as Map
 -- 1693022481538
 main :: IO ()
 main =
-  do inp <- cardinality <$> [format|6 %u&,%n|]
+  do inp <- frequencies <$> [format|6 %u&,%n|]
      print (sum (iterate step inp !! 80))
      print (sum (iterate step inp !! 256))
 

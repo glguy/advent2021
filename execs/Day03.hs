@@ -64,5 +64,5 @@ harness k xs = fromBits (k rule xs) * fromBits (k (cmpl . rule) xs)
 -- | Pick 1 when there are at least as many 1s as 0s
 rule :: [B] -> B
 rule xs
-  | count (B0==) xs <= count (B1==) xs = B1
-  | otherwise                          = B0
+  | count B0 xs <= count B1 xs = B1
+  | otherwise                  = B0

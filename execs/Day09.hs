@@ -12,7 +12,7 @@ Find the basins on the height map.
 -}
 module Main (main) where
 
-import Advent (cardinality, getInputArray, arrIx)
+import Advent (frequencies, getInputArray, arrIx)
 import Advent.Coord (Coord(..), cardinal)
 import Data.Array.Unboxed (Array, UArray, (!), array, assocs, bounds, elems)
 import Data.Char (digitToInt)
@@ -57,4 +57,4 @@ heightsToBasinIds heights = basinIds
                 | otherwise    -> Nothing -- no unique basin
 
 basinSizes :: BasinIds -> [Int]
-basinSizes = toList . cardinality . catMaybes . elems
+basinSizes = toList . frequencies . catMaybes . elems
