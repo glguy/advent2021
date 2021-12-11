@@ -8,36 +8,49 @@ Maintainer  : emertens@gmail.com
 
 <https://adventofcode.com/2021/day/11>
 
+Simulating a sea of octopuses that flash when they get excited.
+
 -}
 module Main (main) where
 
 import Advent (count, getInputLines)
 import Advent.Coord (Coord(..), neighbors)
 import Data.Char (digitToInt)
-import Data.List (elemIndex, unfoldr)
+import Data.List (elemIndex)
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromJust)
 
+-- | >>> :main
+-- 1585
+-- 382
 main :: IO ()
 main =
-  do inp <- getInputLines 11
-     let m = Map.fromList [(C y x, digitToInt z) | (y,zs) <- zip [0..] inp, (x,z) <- zip [0..] zs ]
-     let flashes = simulate m
+  do inp <- toGrid <$> getInputLines 11
+     let flashes = simulate inp
      print (sum (take 100 flashes))
-     print (1 + fromJust (elemIndex (Map.size m) flashes))
+     print (1 + fromJust (elemIndex (Map.size inp) flashes))
 
+-- | Initial grid state to flashes per step
 simulate :: Map Coord Int -> [Int]
-simulate = unfoldr (Just . step)
+simulate = fmap (count (0 ==)) . tail . iterate step
 
-step :: Map Coord Int -> (Int, Map Coord Int)
-step m = (count (0==) m', m')
-  where m' = foldl flash (fmap (1+) m) [k | (k,9) <- Map.toList m]
+-- | Advance the state of the world one time step
+step :: Map Coord Int -> Map Coord Int
+step m = foldl excite (fmap (1 +) m) [k | (k, 9) <- Map.toList m]
 
-flash :: (Map Coord Int) -> Coord -> Map Coord Int
-flash m x =
+-- | Excite an octopus at the given location
+excite :: Map Coord Int -> Coord -> Map Coord Int
+excite m x =
   case Map.lookup x m of
     Just e
-      | e > 8 -> foldl flash (Map.insert x 0 m) (neighbors x)
-      | e > 0 -> Map.insert x (e+1) m
-    _         -> m
+      | e >= 9 -> foldl excite (Map.insert x 0 m) (neighbors x)
+      | e >= 1 -> Map.insert x (1 + e) m
+    _          -> m
+
+-- | Turn input lines into a grid of integers.
+toGrid :: [String] -> Map Coord Int
+toGrid inp = Map.fromList
+  [ (C y x, digitToInt z)
+  | (y,zs) <- zip [0..] inp
+  , (x,z ) <- zip [0..] zs]
