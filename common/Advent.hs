@@ -102,10 +102,10 @@ minimumMaybe xs
 
 -- | Compute the number of occurrences of the elements in a given list.
 --
--- >>> frequencies "bababc"
+-- >>> counts "bababc"
 -- fromList [('a',2),('b',3),('c',1)]
-frequencies :: (Foldable f, Ord a) => f a -> Map a Int
-frequencies xs = SMap.fromListWith (+) [(x,1) | x <- toList xs]
+counts :: (Foldable f, Ord a) => f a -> Map a Int
+counts xs = SMap.fromListWith (+) [(x,1) | x <- toList xs]
 
 -- | Compose a list of functions together
 --
