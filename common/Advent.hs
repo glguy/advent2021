@@ -42,6 +42,11 @@ getInputArray i =
   do xs <- getInputLines i
      pure $! A.listArray (C 0 0, C (length xs - 1) (length (head xs) - 1)) (concat xs)
 
+getInputMap :: Int -> IO (Map Coord Char)
+getInputMap i =
+  do xs <- getInputLines i
+     pure $! SMap.fromList (coordLines xs)
+
 -- | Count the number of elements in a foldable value that satisfy a predicate.
 count :: Foldable t => (a -> Bool) -> t a -> Int
 count p = foldl' (\acc x -> if p x then acc+1 else acc) 0
