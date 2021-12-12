@@ -27,7 +27,7 @@ main =
      print (sum (iterate step inp !! 80))
      print (sum (iterate step inp !! 256))
 
-step :: Map Int Int -> Map Int Int 
+step :: Map Int Int -> Map Int Int
 step xs = Map.fromListWith (+) (tick =<< Map.toList xs)
   where
     tick (0,n) = [(6,n), (8,n)]

@@ -34,6 +34,18 @@ isStraight :: (Int, Int, Int, Int) -> Bool
 isStraight (x1, y1, x2, y2) = x1 == x2 || y1 == y2
 
 -- | Enumerate the points contained in a segment
+--
+-- >>> points (1,1,1,3)
+-- [(1,1),(1,2),(1,3)]
+--
+-- >>> points (9,7,7,7)
+-- [(9,7),(8,7),(7,7)]
+--
+-- >>> points (1,1,3,3)
+-- [(1,1),(2,2),(3,3)]
+--
+-- >>> points (9,7,7,9)
+-- [(9,7),(8,8),(7,9)]
 points :: (Int, Int, Int, Int) -> [(Int, Int)]
 points (x1, y1, x2, y2)
   | x1 == x2  = [(x1,y) | y <- range y1 y2]
@@ -41,6 +53,15 @@ points (x1, y1, x2, y2)
   | otherwise = [(x,y)  | x <- range x1 x2 | y <- range y1 y2]
 
 -- | Inclusive enumeration of the integers between two bounds
+--
+-- >>> range 3 5
+-- [3,4,5]
+--
+-- >>> range 9 9
+-- [9]
+--
+-- >>> range 7 1
+-- [7,6,5,4,3,2,1]
 range :: Int -> Int -> [Int]
 range x y
   | x <= y    = [x .. y]
