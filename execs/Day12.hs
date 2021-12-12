@@ -26,22 +26,25 @@ import Data.Set qualified as Set
 main :: IO ()
 main =
  do inp <- toAdj <$> [format|12 (%a+-%a+%n)*|]
-    print (start False inp)
-    print (start True inp)
+    print (start inp False)
+    print (start inp True)
 
+-- | Compute directed edge map from a list of undirected edges.
 toAdj :: [(String,String)] -> Map String [String]
 toAdj inp = Map.fromListWith (++)
   [(x,[y]) | (a,b) <- inp, (x,y) <- [(a,b),(b,a)], y /= "start"]
 
-start :: Bool -> Map String [String] -> Int
-start extra paths = step paths extra Set.empty "start"
+-- | Search the cave exploration given the directed edges and a
+-- flag if we're allowed to visit a small cave an extra time.
+start :: Map String [String] -> Bool -> Int
+start paths extra = go paths extra Set.empty "start"
 
-step :: Map String [String] -> Bool -> Set String -> String -> Int
-step paths extra seen here = sum (map f (paths Map.! here))
+go :: Map String [String] -> Bool -> Set String -> String -> Int
+go paths extra seen here = sum (map f (paths Map.! here))
   where
     f next
       | next == "end"           = 1
-      | isUpper (head next)     = step paths extra seen                   next
-      | Set.notMember next seen = step paths extra (Set.insert next seen) next
-      | extra                   = step paths False seen                   next
+      | isUpper (head next)     = go paths extra seen                   next
+      | Set.notMember next seen = go paths extra (Set.insert next seen) next
+      | extra                   = go paths False seen                   next
       | otherwise               = 0
