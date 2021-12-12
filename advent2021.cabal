@@ -36,6 +36,7 @@ library
     Advent.PQueue
     Advent.Queue
     Advent.Search
+    Advent.SmallSet
 
   other-modules:
     Advent.Format.Lexer
