@@ -1,8 +1,11 @@
+{-# Language TypeFamilies, TypeOperators #-}
 module Advent.SmallSet where
 
 import Data.Bits
 import Data.List (foldl')
 import Data.Word (Word64)
+import Data.MemoTrie (HasTrie(..))
+import Data.Coerce (coerce)
 
 newtype SmallSet = SmallSet Word64
   deriving (Eq, Ord)
@@ -48,3 +51,9 @@ member x (SmallSet y)
 
 instance Show SmallSet where
   showsPrec p x = showParen (p > 10) (showString "fromList " . shows (toList x))
+
+instance HasTrie SmallSet where
+  newtype SmallSet :->: a = T (Word64 :->: a)
+  trie f = T (trie (coerce f))
+  untrie (T x) = coerce (untrie x)
+  enumerate (T x) = coerce (enumerate x)

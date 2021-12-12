@@ -50,6 +50,7 @@ library
     array            ^>= 0.5.4,
     containers       ^>= 0.6,
     template-haskell ^>= 2.17 || ^>= 2.18,
+    MemoTrie
 
   if flag(bench)
     exposed-modules: Advent.Bench
@@ -125,4 +126,4 @@ executable Day11
 executable Day12
   import:              day
   main-is:             Day12.hs
-  build-depends:       containers
+  build-depends:       containers, MemoTrie

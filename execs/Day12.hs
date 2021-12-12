@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost, QuasiQuotes #-}
+{-# Language ImportQualifiedPost, QuasiQuotes, BlockArguments #-}
 {-|
 Module      : Main
 Description : Day 12 solution
@@ -15,36 +15,53 @@ module Main (main) where
 
 import Advent.Format (format)
 import Data.Char (isUpper)
+import Data.IntMap (IntMap)
+import Data.IntMap qualified as IntMap
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Set (Set)
-import Data.Set qualified as Set
+import Advent.SmallSet (SmallSet)
+import Advent.SmallSet as Set
+import Data.List (mapAccumL)
+import Data.MemoTrie
 
 -- | >>> :main
 -- 3761
 -- 99138
 main :: IO ()
 main =
- do inp <- toAdj <$> [format|12 (%a+-%a+%n)*|]
+ do inp <- toAdj . label <$> [format|12 (%a+-%a+%n)*|]
     print (start inp False)
     print (start inp True)
 
 -- | Compute directed edge map from a list of undirected edges.
-toAdj :: [(String,String)] -> Map String [String]
-toAdj inp = Map.fromListWith (++)
-  [(x,[y]) | (a,b) <- inp, (x,y) <- [(a,b),(b,a)], y /= "start"]
+toAdj :: [(Int, Int)] -> IntMap [Int]
+toAdj inp = IntMap.fromListWith (++)
+  [(x,[y]) | (a,b) <- inp, (x,y) <- [(a,b),(b,a)], y /= 0]
 
 -- | Search the cave exploration given the directed edges and a
 -- flag if we're allowed to visit a small cave an extra time.
-start :: Map String [String] -> Bool -> Int
-start paths extra = go paths extra "start" Set.empty 
-
-go :: Map String [String] -> Bool -> String -> Set String -> Int
-go paths extra here seen = sum (map f (paths Map.! here))
+start :: IntMap [Int] -> Bool -> Int
+start paths extra = go extra 0 Set.empty 
   where
-    f next
-      | next == "end"           = 1
-      | isUpper (head next)     = go paths extra next seen
-      | Set.notMember next seen = go paths extra next (Set.insert next seen)
-      | extra                   = go paths False next seen
-      | otherwise               = 0
+    go = memo3 \extra here seen ->
+      let
+        f next
+          | next == 1               = 1
+          | next < 0                = go extra next seen
+          | not (Set.member next seen) = go extra next (Set.insert next seen)
+          | extra                   = go False next seen
+          | otherwise               = 0
+        in sum (map f (paths IntMap.! here))
+
+-- | Map all the cave names to integers. Use negative integers for big caves.
+label :: [(String, String)] -> [(Int,Int)]
+label = snd . mapAccumL f (Map.fromList [("start",0),("end",1)])
+  where
+    g m x = case Map.lookup x m of
+              Just i -> (m, i)
+              Nothing -> (Map.insert x i m, i)
+                where i = if isUpper (head x) then -Map.size m else Map.size m
+    f m (x,y) = (m2, (x',y'))
+      where
+        (m1,x') = g m x
+        (m2,y') = g m1 y
