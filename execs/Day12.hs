@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost, QuasiQuotes #-}
+{-# Language ImportQualifiedPost, QuasiQuotes, MultiWayIf #-}
 {-|
 Module      : Main
 Description : Day 12 solution
@@ -14,34 +14,37 @@ Search around a cave visiting some caves more than others.
 module Main (main) where
 
 import Advent.Format (format)
-import Advent.Search (dfsOn)
-import Data.Char (isLower, isUpper)
+import Data.Char (isUpper)
 import Data.List
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.List.NonEmpty (NonEmpty((:|)))
+import Data.Set (Set)
+import Data.Set qualified as Set
 
 -- | >>> :main
 -- 3761
 -- 99138
 main :: IO ()
 main =
- do inp <- [format|12 (%a+-%a+%n)*|]
-    let adj = fmap (delete "start") -- don't bother going back
-            $ Map.fromListWith (++)
-            $ concat [ [(a,[b]),(b,[a])] | (a,b) <- inp]
-    let go e = print (length [() | ("end" :| _, _) <- solve e adj])
-    go False
-    go True
+ do inp <- toAdj <$> [format|12 (%a+-%a+%n)*|]
+    print (solve False inp)
+    print (solve True inp)
 
-solve :: Bool -> Map String [String] -> [(NonEmpty String, Bool)]
-solve extra paths = dfsOn fst (step paths) ("start" :| [], extra)
+toAdj :: [(String,String)] -> Map String [String]
+toAdj inp =
+  delete "start" <$> -- don't bother going back
+  Map.fromListWith (++) [entry | (a,b) <- inp, entry <- [(a,[b]),(b,[a])]]
 
-step :: Map String [String] -> (NonEmpty String, Bool) -> [(NonEmpty String, Bool)]
-step paths (here  :| xs, extra) =
-  [ (z :| here : xs, extra')
-  | "end" /= here
-  , z <- paths Map.! here
-  , isUpper (head z) || extra || notElem z xs
-  , let extra' = if extra && isLower (head z) && z `elem` xs then False else extra
-  ]
+solve :: Bool -> Map String [String] -> Int
+solve extra paths = length (step paths extra Set.empty "start")
+
+step :: Map String [String] -> Bool -> Set String -> String -> [()]
+step _ _ _ "end" = [()]
+step paths extra seen here =
+  do next <- paths Map.! here
+     (extra', seen') <-
+        if | isUpper (head next)     -> [(extra, seen)]
+           | Set.notMember next seen -> [(extra, Set.insert next seen)]
+           | extra                   -> [(False, seen)]
+           | otherwise               -> []
+     step paths extra' seen' next                    
