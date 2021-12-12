@@ -15,7 +15,6 @@ module Main (main) where
 
 import Advent.Format (format)
 import Data.Char (isUpper)
-import Data.List
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Set (Set)
@@ -31,9 +30,8 @@ main =
     print (start True inp)
 
 toAdj :: [(String,String)] -> Map String [String]
-toAdj inp =
-  delete "start" <$> -- don't bother going back
-  Map.fromListWith (++) [entry | (a,b) <- inp, entry <- [(a,[b]),(b,[a])]]
+toAdj inp = Map.fromListWith (++)
+  [(x,[y]) | (a,b) <- inp, (x,y) <- [(a,b),(b,a)], y /= "start"]
 
 start :: Bool -> Map String [String] -> Int
 start extra paths = step paths extra Set.empty "start"
