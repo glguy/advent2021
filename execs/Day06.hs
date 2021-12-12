@@ -24,9 +24,14 @@ import Data.Map qualified as Map
 main :: IO ()
 main =
   do inp <- counts <$> [format|6 %u&,%n|]
-     print (sum (iterate step inp !! 80))
-     print (sum (iterate step inp !! 256))
+     let generations = sum <$> iterate step inp
+     print (generations !! 80)
+     print (generations !! 256)
 
+-- | Advance the simulation one day.
+--
+-- >>> step (Map.fromList [(0,1),(1,2),(2,1),(6,1),(8,1)])
+-- fromList [(0,2),(1,1),(5,1),(6,1),(7,1),(8,1)]
 step :: Map Int Int -> Map Int Int
 step xs = Map.fromListWith (+) (tick =<< Map.toList xs)
   where
