@@ -37,14 +37,14 @@ toAdj inp = Map.fromListWith (++)
 -- | Search the cave exploration given the directed edges and a
 -- flag if we're allowed to visit a small cave an extra time.
 start :: Map String [String] -> Bool -> Int
-start paths extra = go paths extra Set.empty "start"
+start paths extra = go paths extra "start" Set.empty 
 
-go :: Map String [String] -> Bool -> Set String -> String -> Int
-go paths extra seen here = sum (map f (paths Map.! here))
+go :: Map String [String] -> Bool -> String -> Set String -> Int
+go paths extra here seen = sum (map f (paths Map.! here))
   where
     f next
       | next == "end"           = 1
-      | isUpper (head next)     = go paths extra seen                   next
-      | Set.notMember next seen = go paths extra (Set.insert next seen) next
-      | extra                   = go paths False seen                   next
+      | isUpper (head next)     = go paths extra next seen
+      | Set.notMember next seen = go paths extra next (Set.insert next seen)
+      | extra                   = go paths False next seen
       | otherwise               = 0
