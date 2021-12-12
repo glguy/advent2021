@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost, QuasiQuotes, MultiWayIf #-}
+{-# Language ImportQualifiedPost, QuasiQuotes #-}
 {-|
 Module      : Main
 Description : Day 12 solution
@@ -27,24 +27,23 @@ import Data.Set qualified as Set
 main :: IO ()
 main =
  do inp <- toAdj <$> [format|12 (%a+-%a+%n)*|]
-    print (solve False inp)
-    print (solve True inp)
+    print (start False inp)
+    print (start True inp)
 
 toAdj :: [(String,String)] -> Map String [String]
 toAdj inp =
   delete "start" <$> -- don't bother going back
   Map.fromListWith (++) [entry | (a,b) <- inp, entry <- [(a,[b]),(b,[a])]]
 
-solve :: Bool -> Map String [String] -> Int
-solve extra paths = length (step paths extra Set.empty "start")
+start :: Bool -> Map String [String] -> Int
+start extra paths = step paths extra Set.empty "start"
 
-step :: Map String [String] -> Bool -> Set String -> String -> [()]
-step _ _ _ "end" = [()]
-step paths extra seen here =
-  do next <- paths Map.! here
-     (extra', seen') <-
-        if | isUpper (head next)     -> [(extra, seen)]
-           | Set.notMember next seen -> [(extra, Set.insert next seen)]
-           | extra                   -> [(False, seen)]
-           | otherwise               -> []
-     step paths extra' seen' next                    
+step :: Map String [String] -> Bool -> Set String -> String -> Int
+step paths extra seen here = sum (map f (paths Map.! here))
+  where
+    f next
+      | next == "end"           = 1
+      | isUpper (head next)     = step paths extra seen                   next
+      | Set.notMember next seen = step paths extra (Set.insert next seen) next
+      | extra                   = step paths False seen                   next
+      | otherwise               = 0
