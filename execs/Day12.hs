@@ -17,10 +17,8 @@ import Advent.Format (format)
 import Data.Char (isUpper)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
-import Data.Map (Map)
 import Data.Map qualified as Map
-import Advent.SmallSet (SmallSet)
-import Advent.SmallSet as Set
+import Advent.SmallSet as SmallSet
 import Data.List (mapAccumL)
 import Data.MemoTrie
 
@@ -41,16 +39,16 @@ toAdj inp = IntMap.fromListWith (++)
 -- | Search the cave exploration given the directed edges and a
 -- flag if we're allowed to visit a small cave an extra time.
 start :: IntMap [Int] -> Bool -> Int
-start paths extra = go extra 0 Set.empty 
+start paths = go 0 SmallSet.empty 
   where
-    go = memo3 \extra here seen ->
+    go = memo3 \here seen extra ->
       let
         f next
-          | next == 1               = 1
-          | next < 0                = go extra next seen
-          | not (Set.member next seen) = go extra next (Set.insert next seen)
-          | extra                   = go False next seen
-          | otherwise               = 0
+          | next == 1 = 1
+          | next < 0  = go next seen extra
+          | not (SmallSet.member next seen) = go next (SmallSet.insert next seen) extra
+          | extra     = go next seen False
+          | otherwise = 0
         in sum (map f (paths IntMap.! here))
 
 -- | Map all the cave names to integers. Use negative integers for big caves.
