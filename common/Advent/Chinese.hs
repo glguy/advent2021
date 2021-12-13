@@ -2,9 +2,11 @@
 {-|
 Module      : Advent.Chinese
 Description : Chinese-remainder theorem
-Copyright   : 2020 Eric Mertens, 2011 Daniel Fischer, 2016-2017 Andrew Lelechenko, Carter Schonwald, Google Inc.
+Copyright   : 2021 Eric Mertens, 2011 Daniel Fischer, 2016-2017 Andrew Lelechenko, Carter Schonwald, Google Inc.
 License     : ISC
 Maintainer  : emertens@gmail.com
+
+<https://en.wikipedia.org/wiki/Chinese_remainder_theorem>
 
 -}
 module Advent.Chinese (Mod(..), toMod, chinese) where
@@ -12,12 +14,15 @@ module Advent.Chinese (Mod(..), toMod, chinese) where
 import Control.Monad (foldM)
 import GHC.Num.Integer (integerGcde)
 
+-- | A package of a residue and modulus. To 'toMod' when constructing
+-- to ensure the reduced invariant is maintained.
 data Mod = Mod { residue, modulus :: !Integer }
   deriving (Eq, Read, Show)
 
 -- | Construct an element of 'Mod' with a given value and modulus.
+-- Modulus must be greater than zero.
 toMod ::
-  Integer {- ^ residue -} ->
+  Integer {- ^ integer -} ->
   Integer {- ^ modulus -} ->
   Mod     {- ^ residue mod modulus -}
 toMod r m
@@ -32,9 +37,15 @@ chinese' (Mod n1 m1) (Mod n2 m2)
   = Just $! toMod (m2 `quot` d * n1 * v + m1 `quot` d * n2 * u) (m1 `quot` d * m2)
   | otherwise = Nothing
   where
-    (d, u, _) = integerGcde m1 m2
-    v = (d - m1 * u) `quot` m2
+    (d, u, v) = integerGcde m1 m2
 
+-- | Find an integer that is equal to all the given numbers individually
+-- considering the modulus of those numbers.
+--
+-- Example: If @x = 2 (mod 3) = 3 (mod 5) = 2 (mod 7)@ then @x = 23@
+-- 
+-- >>> chinese [toMod 2 3, toMod 3 5, toMod 2 7]
+-- Just 23
 chinese :: [Mod] -> Maybe Integer
 chinese []     = Just 0
 chinese (x:xs) = residue <$> foldM chinese' x xs
