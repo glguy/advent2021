@@ -12,10 +12,12 @@ module Advent.Prelude where
 import Control.Applicative ((<|>))
 import Data.Array.Unboxed qualified as A
 import Data.Foldable (toList)
-import Data.List (foldl', inits, sortBy, tails)
+import Data.List (foldl', inits, sortBy, tails, mapAccumL)
 import Data.Ord (comparing)
 import Data.Map (Map)
 import Data.Map.Strict qualified as SMap
+import Data.IntMap (IntMap)
+import Data.IntMap qualified as IntMap
 import Data.Set (Set)
 import Data.Set qualified as Set
 
@@ -125,17 +127,28 @@ times n f x
   | n <= 0    = x
   | otherwise = times (n-1) f $! f x
 
+-- | Given a list of constraints such that each constraint identifies
+-- a unique variable and the set of assignments it can have, this
+-- computes assignments of those variables such that no two input
+-- variables are assigned the same value.
+--
+-- >>> uniqueAssignment [Set.fromList "ab", Set.fromList "bc"]
+-- ["ab","ac","bc"]
 uniqueAssignment ::
-  (Ord a, Ord b) =>
-  [(a, Set b)] {- ^ each @a@ must map to one of the corresponding @b@ -} ->
-  [[(a, b)]]    {- ^ assignments of @a@ and @b@ pairs                  -}
+  (Traversable t, Ord a) =>
+  t (Set a) {- ^ element must map to one of the corresponding set members -} ->
+  [t a]     {- ^ possible assignments -}
 uniqueAssignment m =
-  case sortBy (comparing (Set.size . snd)) m of
-    [] -> [[]]
-    (k,vs):rest ->
-      [ (k,v) : soln
-      | v <- Set.toList vs
-      , soln <- uniqueAssignment (fmap (Set.delete v) <$> rest)]
+  [ snd (mapAccumL (\(x:xs) _ -> (xs,x)) (IntMap.elems a) m)
+  | a <- go IntMap.empty (zip [0..] (toList m))]
+  where
+    go :: Ord a => IntMap a -> [(Int, Set a)] -> [IntMap a]
+    go a xs =
+      case sortBy (comparing (Set.size . snd)) xs of
+        [] -> [a]
+        (k,vs):rest ->
+          do v <- Set.toList vs
+             go (IntMap.insert k v a) (fmap (Set.delete v) <$> rest)
 
 -- | Convert a big-endian list of digits to a single number.
 --
