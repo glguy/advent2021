@@ -127,3 +127,7 @@ executable Day12
   import:              day
   main-is:             Day12.hs
   build-depends:       containers, MemoTrie
+
+executable Day13
+  import:              day
+  main-is:             Day13.hs
