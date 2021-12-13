@@ -39,7 +39,10 @@ coordRow (C row _) = row
 coordCol :: Coord -> Int
 coordCol (C _ col) = col
 
--- | Column-major coordinate indexing
+-- | Row-major coordinate indexing
+--
+-- >>> range (C 1 1, C 2 2)
+-- [C 1 1,C 1 2,C 2 1,C 2 2]
 instance Ix Coord where
   unsafeIndex (C lorow locol, C _hirow hicol) (C row col) =
     (row - lorow) * (hicol - locol + 1) + (col - locol)
