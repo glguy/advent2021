@@ -1,4 +1,57 @@
 {-# Language BlockArguments, TemplateHaskell #-}
+{-|
+Module      : Advent.Format
+Description : Input file format quasiquoter
+Copyright   : (c) Eric Mertens, 2018-2021
+License     : ISC
+Maintainer  : emertens@gmail.com
+
+Usage: @[format|<day> <format string>|]@
+
+When day is specified as @0@ the quasiquoter returns a pure
+parser function. Otherwise day uses command line arguments
+to find the input file and parses it as an IO action.
+
+A format string can optionally be specified across multiple
+lines. In this case the day number goes on the first line and
+the pattern starts on the second line. All common leading white
+space from all the remaining lines is trimmed off and newlines
+are discarded (use @%n@ for matching newlines)
+
+The following are identical:
+
+@
+example1 = [format|1
+    %s%n
+    %s%n|]
+
+example2 = [format|1 %s%n%s%n|]
+@
+
+Patterns:
+
+    * @%u@ unsigned integer as 'Int'
+    * @%d@ signed integer as 'Int'
+    * @%lu@ unsigned integer as 'Integer'
+    * @%ld@ signed integer as 'Integer'
+    * @%s@ non-empty list of non-space characters as 'String'
+    * @%c@ single, non-newline character as 'Char'
+    * @%a@ single ASCII letter as 'Char'
+    * @%n@ single newline character
+    * other characters match literally
+    * use @%@ to escape literal matches of special characters
+    * @\@A@ matches the names of the constructors of type @A@ as an @A@
+
+Structures:
+
+    * @p|q@ combine alternatives @p@ and @q@
+    * @(pq)@ group subpattern @pq@
+    * @p*@ zero-to-many repititions of @p@ as a '[]'
+    * @p+@ one-to-many repititions of @p@ as a '[]'
+    * @p&q@ zero-to-many repititions of @p@ separated by @q@ as a '[]'
+    * @p!@ returns the characters that matched pattern @p@ as a 'String'
+
+-}
 module Advent.Format (format) where
 
 import Advent.Prelude (countBy)
@@ -28,6 +81,7 @@ parse txt =
 failAt :: AlexPosn -> String -> Q a
 failAt (AlexPn _ line col) msg = fail ("Format parse error at " ++ show line ++ ":" ++ show col ++ ", " ++ msg)
 
+-- | Constructs an input parser. See "Advent.Format"
 format :: QuasiQuoter
 format = QuasiQuoter
   { quoteExp  = uncurry makeParser <=< prepare

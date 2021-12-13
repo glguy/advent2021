@@ -6,8 +6,6 @@ Copyright   : (c) Eric Mertens, 2021
 License     : ISC
 Maintainer  : emertens@gmail.com
 
-This type represents sets of integers from 0 to 63 using a Word64
-
 -}
 module Advent.SmallSet where
 
@@ -17,6 +15,7 @@ import Data.List (foldl')
 import Data.MemoTrie (HasTrie(..))
 import Data.Word (Word64)
 
+-- | Sets of integers from 0 to 63 efficiently implemented using a Word64
 newtype SmallSet = SmallSet Word64
   deriving (Eq, Ord)
 
@@ -36,6 +35,7 @@ newtype SmallSet = SmallSet Word64
 fromList :: [Int] -> SmallSet
 fromList xs = foldl' (flip insert) empty xs
 
+-- | Return an ordered list of the elements in the set
 toList :: SmallSet -> [Int]
 toList (SmallSet x) = go 0 x
   where
@@ -47,6 +47,7 @@ toList (SmallSet x) = go 0 x
         next = countTrailingZeros n
         x    = offset + next
 
+-- | Predicate for integer elements that fit in a 'SmallSet'
 inRange :: Int -> Bool
 inRange x = 0 <= x && x < 64
 

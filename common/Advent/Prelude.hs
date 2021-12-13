@@ -52,7 +52,7 @@ same xs = all (head (toList xs) ==) xs
 pickOne :: [a] -> [(a, [a])]
 pickOne xs = [ (x, l++r) | (l,x:r) <- zip (inits xs) (tails xs) ]
 
--- | Implementation of 'nub' that uses 'Ord' for efficiency.
+-- | Implementation of 'Data.List.nub' that uses 'Ord' for efficiency.
 ordNub :: Ord a => [a] -> [a]
 ordNub xs = foldr f (const []) xs Set.empty
   where
@@ -86,6 +86,16 @@ counts xs = SMap.fromListWith (+) [(x,1) | x <- toList xs]
 compose :: [a -> a] -> a -> a
 compose = foldr (.) id
 
+-- | Split list into chunks. The last chunk might be incomplete.
+--
+-- >>> chunks 3 [1..9]
+-- [[1,2,3],[4,5,6],[7,8,9]]
+--
+-- >>> chunks 3 [1..7]
+-- [[1,2,3],[4,5,6],[7]]
+--
+-- >>> chunks 3 []
+-- []
 chunks :: Int -> [a] -> [[a]]
 chunks _ [] = []
 chunks n xs =
