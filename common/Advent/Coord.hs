@@ -1,3 +1,4 @@
+{-# Language ImportQualifiedPost #-}
 {-|
 Module      : Advent.Coord
 Description : Row-major coordinates
@@ -20,12 +21,11 @@ where y grows down, x grows right.
 {-# Language BangPatterns, TypeFamilies, TypeOperators, DeriveGeneric #-}
 module Advent.Coord where
 
-import           Data.Foldable
-import           Data.Ix
-import           Data.Map (Map)
-import qualified Data.Map as Map
-import           GHC.Arr
-import           GHC.Generics
+import Data.Map (Map)
+import Data.Map qualified as Map
+import GHC.Arr (Ix(unsafeIndex, range, index, inRange, unsafeRangeSize) )
+import GHC.Generics (Generic)
+import GHC.Ix (indexError)
 
 -- | Two-dimensional coordinate
 data Coord = C !Int !Int
@@ -43,16 +43,30 @@ coordCol (C _ col) = col
 --
 -- >>> range (C 1 1, C 2 2)
 -- [C 1 1,C 1 2,C 2 1,C 2 2]
+--
+-- >>> index (C 1 1, C 2 2) <$> range (C 1 1, C 2 2)
+-- [0,1,2,3]
 instance Ix Coord where
-  unsafeIndex (C lorow locol, C _hirow hicol) (C row col) =
-    (row - lorow) * (hicol - locol + 1) + (col - locol)
+  unsafeIndex (C lorow locol, C hirow hicol) (C row col) =
+    unsafeIndex (lorow,hirow) row * unsafeRangeSize (locol,hicol) + unsafeIndex (locol,hicol) col
+  {-# INLINE unsafeIndex #-}
+
+  index b i
+    | inRange b i = unsafeIndex b i
+    | otherwise   = indexError b i "Coord" 
+  {-# INLINE index #-}
 
   inRange (C lorow locol, C hirow hicol) (C row col) =
-    lorow <= row && row <= hirow &&
-    locol <= col && col <= hicol
+    inRange (lorow,hirow) row && inRange (locol,hicol) col
+  {-# INLINE inRange #-}
 
   range (C lorow locol, C hirow hicol) =
-    [ C row col | row <- [lorow..hirow], col <- [locol..hicol]]
+    [C row col | row <- [lorow..hirow], col <- [locol..hicol]]
+  {-# INLINE range #-}
+
+  unsafeRangeSize (C lorow locol, C hirow hicol) =
+    (hirow - lorow + 1) * (hicol - locol + 1)
+  {-# INLINE unsafeRangeSize #-}
 
 -- | Decrement y coordinate
 above :: Coord -> Coord
