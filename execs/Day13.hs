@@ -16,7 +16,6 @@ module Main (main) where
 
 import Advent.Coord (Coord(C), drawCoords)
 import Advent.Format (format)
-import Data.Map qualified as Map
 import Data.Set (Set)
 import Data.Set qualified as Set
 
@@ -40,7 +39,7 @@ main =
          p1       = states !! 1 -- points after first fold
          p2       = last states -- points after last fold
      print (length p1)
-     putStr (drawCoords (Map.fromSet (const '█') p2))
+     putStr (drawCoords p2)
 
 -- | 2-dimensional fold the set of points over a line.
 foldPoints :: (A, Int) {- ^ fold line -} -> Set Coord -> Set Coord

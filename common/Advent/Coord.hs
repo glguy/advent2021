@@ -20,6 +20,7 @@ where y grows down, x grows right.
 -}
 module Advent.Coord where
 
+import Data.Foldable (toList)
 import Data.Map (Map)
 import Data.Map qualified as Map
 import GHC.Generics (Generic)
@@ -154,12 +155,17 @@ scaleCoord n (C x y) = C (x*n) (y*n)
 
 -- | Render a minimal bounding box containing all the characters
 -- at the given coordinates. Empty space filled with space characters.
-drawCoords :: Map Coord Char -> String
-drawCoords pixels =
+drawPicture :: Map Coord Char -> String
+drawPicture pixels =
   case boundingBox (Map.keys pixels) of
     Nothing -> ""
     Just (C miny minx, C maxy maxx) ->
       unlines [[Map.findWithDefault ' ' (C y x) pixels | x <- [minx .. maxx]] | y <- [miny .. maxy]]
+
+-- | Render a minimal bounding box containing boxes
+-- at the given coordinates.
+drawCoords :: Foldable t => t Coord -> String
+drawCoords coords = drawPicture (Map.fromList [(c,'█') | c <- toList coords])
 
 -- | Given a list of lines pair up each character with
 -- its position.
