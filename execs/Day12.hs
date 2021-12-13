@@ -18,7 +18,6 @@ don't need to track anything about visiting a big cave.
 -}
 module Main (main) where
 
-import Advent (löb)
 import Advent.Format (format)
 import Data.Char (isUpper)
 import Data.IntMap (IntMap)
