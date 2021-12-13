@@ -19,13 +19,13 @@ don't need to track anything about visiting a big cave.
 module Main (main) where
 
 import Advent.Format (format)
+import Advent.SmallSet qualified as SmallSet
 import Data.Char (isUpper)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
-import Data.Map qualified as Map
-import Advent.SmallSet as SmallSet
 import Data.List (mapAccumL)
-import Data.MemoTrie
+import Data.Map qualified as Map
+import Data.MemoTrie (memo3)
 
 -- | >>> :main
 -- 3761
