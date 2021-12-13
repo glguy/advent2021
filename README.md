@@ -79,7 +79,7 @@ fold along y=7
 fold along x=5
 ```
 
-This can be parsed using the following pattern string
+This can be parsed using the following pattern string from [Day13.hs](execs/Day13.hs)
 
 ```haskell
 data A = Ax | Ay
