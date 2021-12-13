@@ -24,6 +24,14 @@ data A = Ax | Ay
 
 mempty -- template haskell staging
 
+-- | >>> :main
+-- 716
+-- ███  ███   ██  █  █ ████ ███  █    ███ 
+-- █  █ █  █ █  █ █ █  █    █  █ █    █  █
+-- █  █ █  █ █    ██   ███  ███  █    █  █
+-- ███  ███  █    █ █  █    █  █ █    ███ 
+-- █ █  █    █  █ █ █  █    █  █ █    █ █ 
+-- █  █ █     ██  █  █ █    ███  ████ █  █
 main :: IO ()
 main =
   do (points, folds) <- [format|13 (%u,%u%n)*%n(fold along @A=%u%n)*|]
@@ -31,7 +39,7 @@ main =
          p1 = states !! 1 -- points after first instruction
          p2 = last states -- points after last instruction
      print (length p1)
-     putStrLn (drawCoords (Map.fromList [(C y x, '█') | (x,y) <- Set.toList p2]))
+     putStr (drawCoords (Map.fromList [(C y x, '█') | (x,y) <- Set.toList p2]))
 
 foldPoints :: Set (Int, Int) -> (A, Int) -> Set (Int, Int)
 foldPoints inp (Ax, lx) = Set.map (\(x,y) -> (foldAxis lx x, y)) inp
