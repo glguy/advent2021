@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost #-}
+{-# Language ImportQualifiedPost, DeriveGeneric #-}
 {-|
 Module      : Advent.Coord
 Description : Row-major coordinates
@@ -18,14 +18,12 @@ where y grows down, x grows right.
 @
 
 -}
-{-# Language BangPatterns, TypeFamilies, TypeOperators, DeriveGeneric #-}
 module Advent.Coord where
 
 import Data.Map (Map)
 import Data.Map qualified as Map
-import GHC.Arr (Ix(unsafeIndex, range, index, inRange, unsafeRangeSize) )
 import GHC.Generics (Generic)
-import GHC.Ix (indexError)
+import GHC.Ix (Ix(unsafeIndex, range, index, inRange, unsafeRangeSize) , indexError)
 
 -- | Two-dimensional coordinate
 data Coord = C !Int !Int

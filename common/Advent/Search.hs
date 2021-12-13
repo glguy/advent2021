@@ -1,3 +1,4 @@
+{-# Language ImportQualifiedPost #-}
 {-|
 Module      : Main
 Description : Generalized search functions
@@ -8,11 +9,11 @@ Maintainer  : emertens@gmail.com
 -}
 module Advent.Search where
 
-import qualified Advent.PQueue as PQueue
-import qualified Advent.Queue  as Queue
-import           Data.Foldable
-import qualified Data.Set as Set
-import qualified Data.IntSet as IntSet
+import Advent.PQueue qualified as PQueue
+import Advent.Queue qualified as Queue
+import Data.Foldable (foldl')
+import Data.Set qualified as Set
+import Data.IntSet qualified as IntSet
 
 {-# INLINE dfs #-}
 dfs :: Ord a => (a -> [a]) -> a -> [a]

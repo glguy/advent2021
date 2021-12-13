@@ -1,3 +1,4 @@
+{-# Language ImportQualifiedPost #-}
 {-|
 Module      : Advent.PQueue
 Description : Int-priority min queue
@@ -23,8 +24,8 @@ module Advent.PQueue
   , viewWithPriority
   ) where
 
-import           Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
+import Data.IntMap (IntMap)
+import Data.IntMap qualified as IntMap
 
 -- | Priority queue. No guarantees are made regarding the order
 -- entries with the same priority are returned in.
