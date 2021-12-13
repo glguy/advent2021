@@ -13,8 +13,7 @@ Figure out how the miswired segment display works.
 -}
 module Main (main) where
 
-import Advent (countBy, fromDigits)
-import Advent.Format (format)
+import Advent (countBy, format, fromDigits)
 import Data.List (permutations, sort)
 import Data.Map (Map)
 import Data.Map qualified as Map

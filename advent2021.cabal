@@ -33,6 +33,8 @@ library
     Advent.Chinese
     Advent.Coord
     Advent.Format
+    Advent.Input
+    Advent.Prelude
     Advent.PQueue
     Advent.Queue
     Advent.Search

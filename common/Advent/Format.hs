@@ -1,7 +1,8 @@
 {-# Language BlockArguments, TemplateHaskell #-}
 module Advent.Format (format) where
 
-import Advent (countBy, getRawInput)
+import Advent.Prelude (countBy)
+import Advent.Input (getRawInput)
 import Advent.Format.Lexer ( alexScanTokens, AlexPosn(..) )
 import Advent.Format.Parser (parseFormat, ParseError(..) )
 import Advent.Format.Types ( interesting, Format(..), acceptsEmpty, showFormat, showToken )

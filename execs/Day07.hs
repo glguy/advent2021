@@ -13,7 +13,7 @@ Find the minimum fuel cost to move the submarines to a common point.
 -}
 module Main (main) where
 
-import Advent.Format (format)
+import Advent (format)
 import Data.List (sort)
 
 -- | >>> :main

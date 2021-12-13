@@ -13,8 +13,7 @@ Multiplying fish!
 -}
 module Main (main) where
 
-import Advent (counts)
-import Advent.Format (format)
+import Advent (counts, format)
 import Data.Map (Map)
 import Data.Map qualified as Map
 

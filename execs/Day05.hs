@@ -13,8 +13,7 @@ The input is a bunch of segments; count intersections.
 -}
 module Main (main) where
 
-import Advent (counts, countBy)
-import Advent.Format (format)
+import Advent (counts, countBy, format)
 
 -- | >>> :main
 -- 8060

@@ -14,8 +14,7 @@ in each position.
 -}
 module Main (main) where
 
-import Advent (count, fromDigits)
-import Advent.Format (format)
+import Advent (count, format, fromDigits)
 import Data.List (transpose)
 
 -- | A bit

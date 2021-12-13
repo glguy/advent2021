@@ -5,6 +5,18 @@ Copyright   : (c) Eric Mertens, 2018
 License     : ISC
 Maintainer  : emertens@gmail.com
 
+2-dimensional coordinates commonly found in AoC problems
+where y grows down, x grows right.
+
+@
+o---> x
+|
+|
+|
+v
+y
+@
+
 -}
 {-# Language BangPatterns, TypeFamilies, TypeOperators, DeriveGeneric #-}
 module Advent.Coord where
@@ -92,10 +104,11 @@ scaleCoord :: Int -> Coord -> Coord
 scaleCoord n (C x y) = C (x*n) (y*n)
 
 drawCoords :: Map Coord Char -> String
-drawCoords pixels = unlines [[pixel (C y x) | x <- [minx .. maxx]] | y <- [miny .. maxy]]
-  where
-    pixel c = Map.findWithDefault ' ' c pixels
-    Just (C miny minx, C maxy maxx) = boundingBox (Map.keys pixels)
+drawCoords pixels =
+  case boundingBox (Map.keys pixels) of
+    Nothing -> ""
+    Just (C miny minx, C maxy maxx) ->
+      unlines [[Map.findWithDefault ' ' (C y x) pixels | x <- [minx .. maxx]] | y <- [miny .. maxy]]
 
 coordLines :: [String] -> [(Coord, Char)]
 coordLines rows = [(C y x, z) | (y,row) <- zip [0..] rows, (x,z) <- zip [0..] row]

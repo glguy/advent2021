@@ -13,8 +13,7 @@ Count the number of increasing pairs of measurements.
 -}
 module Main where
 
-import Advent (countBy)
-import Advent.Format (format)
+import Advent (countBy, format)
 
 -- | >>> :main
 -- 1681

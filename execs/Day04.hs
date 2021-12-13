@@ -13,7 +13,7 @@ Today we played Bingo and picked the first and last winning cards
 -}
 module Main (main) where
 
-import Advent.Format (format)
+import Advent (format)
 import Data.List (partition, transpose)
 
 type Board = [[Int]]

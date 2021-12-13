@@ -13,7 +13,7 @@ Implement a simple submarine piloting/aiming command interpreter.
 -}
 module Main (main) where
 
-import Advent.Format (format)
+import Advent (format)
 import Data.Foldable (foldMap')
 
 -- | Three possible commands a submarine can recieve.
