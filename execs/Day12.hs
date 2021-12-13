@@ -27,7 +27,7 @@ import Data.MemoTrie
 -- 99138
 main :: IO ()
 main =
- do inp <- toAdj . label <$> [format|12 (%a+-%a+%n)*|]
+ do inp <- toAdj . label <$> [format|12 (%s-%s%n)*|]
     print (start inp False)
     print (start inp True)
 
