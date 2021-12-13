@@ -35,17 +35,18 @@ mempty -- template haskell staging
 main :: IO ()
 main =
   do (points, folds) <- [format|13 (%u,%u%n)*%n(fold along @A=%u%n)*|]
-     let states = scanl foldPoints (Set.fromList points) folds
-         p1 = states !! 1 -- points after first instruction
-         p2 = last states -- points after last instruction
+     let pointSet = Set.fromList [C y x | (x, y) <- points]
+         states   = scanl (flip foldPoints) pointSet folds
+         p1       = states !! 1 -- points after first fold
+         p2       = last states -- points after last fold
      print (length p1)
-     putStr (drawCoords (Map.fromList [(C y x, '█') | (x,y) <- Set.toList p2]))
+     putStr (drawCoords (Map.fromSet (const '█') p2))
 
-foldPoints :: Set (Int, Int) -> (A, Int) -> Set (Int, Int)
-foldPoints inp (Ax, lx) = Set.map (\(x,y) -> (foldAxis lx x, y)) inp
-foldPoints inp (Ay, ly) = Set.map (\(x,y) -> (x, foldAxis ly y)) inp
+-- | 2-dimensional fold the set of points over a line.
+foldPoints :: (A, Int) {- ^ fold line -} -> Set Coord -> Set Coord
+foldPoints (Ax, lx) = Set.map \(C y x) -> C y (fold1 lx x)
+foldPoints (Ay, ly) = Set.map \(C y x) -> C (fold1 ly y) x
 
-foldAxis :: Int -> Int -> Int
-foldAxis a i
-  | i > a     = 2 * a - i
-  | otherwise = i
+-- | 1-dimensional fold updating one point
+fold1 :: Int {- ^ fold -} -> Int {- ^ point -} -> Int
+fold1 a i = a - abs (a - i)
