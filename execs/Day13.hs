@@ -16,11 +16,11 @@ module Main (main) where
 
 import Advent.Coord (Coord(C), drawCoords)
 import Advent.Format (format)
-import Data.Set qualified as Set
-import Data.Set (Set)
 import Data.Map qualified as Map
+import Data.Set (Set)
+import Data.Set qualified as Set
 
-data A = Ax | Ay
+data A = Ax | Ay deriving (Show)
 
 mempty -- template haskell staging
 
