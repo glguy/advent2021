@@ -1,4 +1,4 @@
-{-# Language QuasiQuotes, BlockArguments #-}
+{-# Language QuasiQuotes, BlockArguments, ImportQualifiedPost, TemplateHaskell, OverloadedLists #-}
 {-|
 Module      : Main
 Description : Day 13 solution
@@ -14,26 +14,28 @@ we fold and fold and fold and find our secret code.
 -}
 module Main (main) where
 
-import Advent (ordNub)
+import Advent.Coord (Coord(C), drawCoords)
 import Advent.Format (format)
-import Data.Foldable (for_)
+import Data.Set qualified as Set
+import Data.Set (Set)
+import Data.Map qualified as Map
+
+data A = Ax | Ay
+
+mempty -- template haskell staging
 
 main :: IO ()
 main =
-  do (dots, folds) <- [format|13 (%u,%u%n)*%n(fold along %c=%u%n)*|]
-     let dots' = scanl foldup dots folds
-         p1 = dots' !! 1 -- points after first instruction
-         p2 = last dots' -- points after last instruction
-         ymax = maximum (snd <$> p2)
-         xmax = maximum (fst <$> p2)
+  do (points, folds) <- [format|13 (%u,%u%n)*%n(fold along @A=%u%n)*|]
+     let states = scanl foldPoints (Set.fromList points) folds
+         p1 = states !! 1 -- points after first instruction
+         p2 = last states -- points after last instruction
      print (length p1)
-     for_ [0..ymax] \y ->   
-        putStrLn [if (x,y) `elem` p2 then '█' else '▒' | x <- [0..xmax]]
+     putStrLn (drawCoords (Map.fromList [(C y x, '█') | (x,y) <- Set.toList p2]))
 
-foldup :: [(Int, Int)] -> (Char, Int) -> [(Int, Int)]
-foldup inp ('x',lx) = ordNub [(foldAxis lx x, y) | (x,y) <- inp]
-foldup inp ('y',ly) = ordNub [(x, foldAxis ly y) | (x,y) <- inp]
-foldup _   _        = error "bad fold axis"
+foldPoints :: Set (Int, Int) -> (A, Int) -> Set (Int, Int)
+foldPoints inp (Ax, lx) = Set.map (\(x,y) -> (foldAxis lx x, y)) inp
+foldPoints inp (Ay, ly) = Set.map (\(x,y) -> (x, foldAxis ly y)) inp
 
 foldAxis :: Int -> Int -> Int
 foldAxis a i
