@@ -22,7 +22,7 @@ main :: IO ()
 main =
   do (dots, folds) <- [format|13 (%u,%u%n)*%n(fold along %c=%u%n)*|]
      let dots' = scanl foldup dots folds
-         p1 = head dots' -- points after first instruction
+         p1 = dots' !! 1 -- points after first instruction
          p2 = last dots' -- points after last instruction
          ymax = maximum (snd <$> p2)
          xmax = maximum (fst <$> p2)
