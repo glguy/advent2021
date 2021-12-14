@@ -200,5 +200,5 @@ power (#) one n
     double x = x # x
     go i
       | 1 == i    = one
-      | even i    =       double (go (i `quot` 2))
-      | otherwise = one # double (go (i `quot` 2))
+      | even i    = double (go (i `quot` 2))
+      | otherwise = double (go (i `quot` 2)) # one

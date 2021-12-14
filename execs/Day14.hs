@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, OverloadedLists #-}
 {-|
 Module      : Main
 Description : Day 14 solution
@@ -24,7 +24,11 @@ import Data.Map.Strict qualified as Map
 
 -- | Associates pairs of elements followed by an element
 -- with the resulting pairs of elements when applying the rule.
-type Rule a = Map (a,a) (Map (a,a) Int)
+--
+-- @[(a,b)] -> [((c,d),1), ((e,f),2)]@ says that an @a@ followed
+-- by a @b@ will result in 1 @c@ followed by a @d@ and 2 @e@
+-- followed by an @f@.
+type Rule a = Map (a,a) (Map (a,a) Integer)
 
 -- | >>> :main
 -- 2068
@@ -36,7 +40,7 @@ main =
      print (solve rule 10 seed)
      print (solve rule 40 seed)
 
-solve :: Ord a => Rule a -> Int -> [a] -> Int
+solve :: Ord a => Rule a -> Int -> [a] -> Integer
 solve rule n seed = maximum occ - minimum occ
   where
     ruleN = power thenRule rule n
@@ -47,7 +51,7 @@ solve rule n seed = maximum occ - minimum occ
         | pair <- zip seed (tail seed)]
 
 tableToRule :: Ord a => [(a,a,a)] -> Rule a
-tableToRule xs = Map.fromList [((l,r), Map.fromList [((l,m), 1),((m,r), 1)]) | (l,r,m) <- xs]
+tableToRule xs = Map.fromList [((l,r), [((l,m),1), ((m,r),1)]) | (l,r,m) <- xs]
 
 thenRule :: Ord a => Rule a -> Rule a -> Rule a
 thenRule x y = x <&> \m ->
