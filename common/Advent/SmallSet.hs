@@ -1,4 +1,4 @@
-{-# Language TypeFamilies, TypeOperators #-}
+{-# Language TypeFamilies, TypeOperators, BlockArguments #-}
 {-|
 Module      : Advent.SmallSet
 Description : An efficient set representation for small integers.
@@ -33,7 +33,7 @@ newtype SmallSet = SmallSet Word64
 -- >>> fromList [0,10,20]
 -- fromList [0,10,20]
 fromList :: [Int] -> SmallSet
-fromList xs = foldl' (flip insert) empty xs
+fromList = foldl' (flip insert) empty
 
 -- | Return an ordered list of the elements in the set
 toList :: SmallSet -> [Int]
@@ -147,6 +147,11 @@ size (SmallSet x) = popCount x
 -- | Shows a 'SmallSet' using 'fromList' syntax
 instance Show SmallSet where
   showsPrec p x = showParen (p > 10) (showString "fromList " . shows (toList x))
+
+-- | Reads a 'SmallSet' using 'fromList' syntax
+instance Read SmallSet where
+  readsPrec p = readParen (p > 10) \s ->
+    [(fromList xs, s2) | ("fromList", s1) <- lex s, (xs, s2) <- reads s1]
 
 -- | Instance derived from: 'HasTrie' 'Word64'
 instance HasTrie SmallSet where

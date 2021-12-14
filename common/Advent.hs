@@ -7,10 +7,10 @@ License     : ISC
 Maintainer  : emertens@gmail.com
 
 -}
-module Advent
-  (module Advent.Prelude,
-   module Advent.Input,
-   module Advent.Format,
+module Advent (
+  module Advent.Prelude,
+  module Advent.Input,
+  module Advent.Format,
   ) where
 
 import Advent.Prelude

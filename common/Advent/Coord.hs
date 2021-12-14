@@ -24,7 +24,7 @@ import Data.Foldable (toList)
 import Data.Map (Map)
 import Data.Map qualified as Map
 import GHC.Generics (Generic)
-import GHC.Ix (Ix(unsafeIndex, range, index, inRange, unsafeRangeSize) , indexError)
+import GHC.Ix (Ix(unsafeIndex, range, index, inRange, unsafeRangeSize), indexError)
 
 -- | Two-dimensional coordinate
 data Coord = C !Int !Int
@@ -86,6 +86,12 @@ right (C y x) = C y (x+1)
 -- | Swap x and y coordinates
 invert :: Coord -> Coord
 invert (C y x) = C x y
+
+flipX :: Coord -> Coord
+flipX (C y x) = C y (-x)
+
+flipY :: Coord -> Coord
+flipY (C y x) = C (-y) x
 
 -- | Rotate coordinate 90-degrees CCW about the origin
 turnLeft :: Coord -> Coord
