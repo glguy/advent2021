@@ -17,40 +17,38 @@ resulting polymer would be humungous!
 -}
 module Main (main) where
 
-import Advent (format)
+import Advent (format, power)
+import Data.Functor ((<&>))
 import Data.Map (Map)
 import Data.Map.Strict qualified as Map
-import Data.MemoTrie (memo2)
+
+-- | Associates pairs of elements followed by an element
+-- with the resulting pairs of elements when applying the rule.
+type Rule a = Map (a,a) (Map (a,a) Int)
 
 -- | >>> :main
 -- 2068
 -- 2158894777814
 main :: IO ()
 main =
-  do (seed, rules) <- [format|14 %s%n%n(%c%c -> %c%n)*|]
-     let ruleMap = Map.fromList [((l, r), m) | (l, r, m) <- rules]
-     print (solve ruleMap 10 seed)
-     print (solve ruleMap 40 seed)
+  do (seed, table) <- [format|14 %s%n%n(%c%c -> %c%n)*|]
+     let rule = tableToRule table
+     print (solve rule 10 seed)
+     print (solve rule 40 seed)
 
--- | Given the polymer insertion rules and a left and right
--- element, compute the resulting counts including the left
--- side, all generated elements, but not the right-most side.
--- Given the computed counts return the difference between the
--- most and least frequent element.
-solve ::
-  Map (Char, Char) Char {- ^ pair insertion rules -} ->
-  Int                   {- ^ iteration count      -} ->
-  String                {- ^ polymer template     -} ->
-  Int
-solve ruleMap n seed = maximum occ - minimum occ
+solve :: Ord a => Rule a -> Int -> [a] -> Int
+solve rule n seed = maximum occ - minimum occ
   where
+    ruleN = power thenRule rule n
+
     occ = Map.insertWith (+) (last seed) 1
-        $ Map.unionsWith (+) (zipWith stepN seed (tail seed))
+        $ Map.unionsWith (+)
+        [ Map.mapKeysWith (+) fst (ruleN Map.! pair)
+        | pair <- zip seed (tail seed)]
 
-    stepN = iterate step base !! n
+tableToRule :: Ord a => [(a,a,a)] -> Rule a
+tableToRule xs = Map.fromList [((l,r), Map.fromList [((l,m), 1),((m,r), 1)]) | (l,r,m) <- xs]
 
-    step prev = memo2 \l r ->
-      let m = ruleMap Map.! (l,r) in
-      Map.unionWith (+) (prev l m) (prev m r)
-
-    base l _r = Map.singleton l 1
+thenRule :: Ord a => Rule a -> Rule a -> Rule a
+thenRule x y = x <&> \m ->
+  Map.unionsWith (+) [(v *) <$> (y Map.! k) | (k,v) <- Map.toList m]
