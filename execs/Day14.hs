@@ -17,10 +17,10 @@ resulting polymer would be humungous!
 -}
 module Main (main) where
 
-import Advent ( format )
+import Advent (format)
 import Data.Map (Map)
 import Data.Map.Strict qualified as Map
-import Data.MemoTrie (memo3)
+import Data.MemoTrie (memo2)
 
 -- | >>> :main
 -- 2068
@@ -28,7 +28,7 @@ import Data.MemoTrie (memo3)
 main :: IO ()
 main =
   do (seed, rules) <- [format|14 %s%n%n(%c%c -> %c%n)*|]
-     let ruleMap = Map.fromList [((l, r), m) | (l,r,m) <- rules]
+     let ruleMap = Map.fromList [((l, r), m) | (l, r, m) <- rules]
      print (solve ruleMap 10 seed)
      print (solve ruleMap 40 seed)
 
@@ -45,10 +45,12 @@ solve ::
 solve ruleMap n seed = maximum occ - minimum occ
   where
     occ = Map.insertWith (+) (last seed) 1
-        $ Map.unionsWith (+) (zipWith (go n) seed (tail seed))
+        $ Map.unionsWith (+) (zipWith stepN seed (tail seed))
 
-    go = memo3 \i l r ->
-      if i == 0
-        then Map.singleton l 1
-        else let m = ruleMap Map.! (l,r) in
-             Map.unionWith (+) (go (i - 1) l m) (go (i - 1) m r)
+    stepN = iterate step base !! n
+
+    step prev = memo2 \l r ->
+      let m = ruleMap Map.! (l,r) in
+      Map.unionWith (+) (prev l m) (prev m r)
+
+    base l _r = Map.singleton l 1
