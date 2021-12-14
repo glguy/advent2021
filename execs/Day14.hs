@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, OverloadedLists #-}
+{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes #-}
 {-|
 Module      : Main
 Description : Day 14 solution
@@ -51,7 +51,7 @@ solve rule n seed = maximum occ - minimum occ
         $ ruleN `applyRule` start
 
 tableToRule :: Ord a => [(a,a,a)] -> Rule a
-tableToRule xs = Map.fromList [((l,r), [((l,m),1), ((m,r),1)]) | (l,r,m) <- xs]
+tableToRule xs = Map.fromList [((l,r), counts [(l,m), (m,r)]) | (l,r,m) <- xs]
 
 applyRule :: Ord a => Rule a -> Map (a,a) Int -> Map (a,a) Int
-applyRule y m = Map.unionsWith (+) [(v *) <$> (y Map.! k) | (k,v) <- Map.toList m]
+applyRule y m = Map.unionsWith (+) [(v *) <$> y Map.! k | (k,v) <- Map.toList m]
