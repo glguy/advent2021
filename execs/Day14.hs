@@ -34,10 +34,10 @@ type Rule a = Map (a,a) (Map (a,a) Int)
 -- 2158894777814
 main :: IO ()
 main =
-  do (seed, table) <- [format|14 %s%n%n(%c%c -> %c%n)*|]
-     let rule = tableToRule table
-     print (solve rule 10 seed)
-     print (solve rule 40 seed)
+ do (seed, table) <- [format|14 %s%n%n(%c%c -> %c%n)*|]
+    let rule = tableToRule table
+    print (solve rule 10 seed)
+    print (solve rule 40 seed)
 
 solve :: Ord a => Rule a -> Integer -> [a] -> Int
 solve rule n seed = maximum occ - minimum occ
@@ -48,7 +48,7 @@ solve rule n seed = maximum occ - minimum occ
 
     occ = Map.insertWith (+) (head seed) 1
         $ Map.mapKeysWith (+) snd
-        $ ruleN `applyRule` start
+        $ applyRule ruleN start
 
 tableToRule :: Ord a => [(a,a,a)] -> Rule a
 tableToRule xs = Map.fromList [((l,r), counts [(l,m), (m,r)]) | (l,r,m) <- xs]
