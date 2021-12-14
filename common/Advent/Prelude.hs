@@ -185,14 +185,14 @@ toDigits base x
     go xs n = case quotRem n base of
                 (n', digit) -> go (digit:xs) n'
 
--- | Efficient exponentiation
+-- | Efficient exponentiation using an associative operator
 --
 -- >>> power (+) 1 10
 -- 10
 --
 -- >>> power (*) 2 10
 -- 1024 
-power :: (a -> a -> a) -> a -> Int -> a
+power :: (a -> a -> a) -> a -> Integer -> a
 power (#) one n
   | n < 1 = error ("power: bad argument " ++ show n)
   | otherwise = go n

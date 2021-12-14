@@ -17,8 +17,7 @@ resulting polymer would be humungous!
 -}
 module Main (main) where
 
-import Advent (format, power)
-import Data.Functor ((<&>))
+import Advent (format, power, counts)
 import Data.Map (Map)
 import Data.Map.Strict qualified as Map
 
@@ -28,7 +27,7 @@ import Data.Map.Strict qualified as Map
 -- @[(a,b)] -> [((c,d),1), ((e,f),2)]@ says that an @a@ followed
 -- by a @b@ will result in 1 @c@ followed by a @d@ and 2 @e@
 -- followed by an @f@.
-type Rule a = Map (a,a) (Map (a,a) Integer)
+type Rule a = Map (a,a) (Map (a,a) Int)
 
 -- | >>> :main
 -- 2068
@@ -40,19 +39,19 @@ main =
      print (solve rule 10 seed)
      print (solve rule 40 seed)
 
-solve :: Ord a => Rule a -> Int -> [a] -> Integer
+solve :: Ord a => Rule a -> Integer -> [a] -> Int
 solve rule n seed = maximum occ - minimum occ
   where
-    ruleN = power thenRule rule n
+    ruleN = power (fmap . applyRule) rule n
 
-    occ = Map.insertWith (+) (last seed) 1
-        $ Map.unionsWith (+)
-        [ Map.mapKeysWith (+) fst (ruleN Map.! pair)
-        | pair <- zip seed (tail seed)]
+    start = counts (zip seed (tail seed))
+
+    occ = Map.insertWith (+) (head seed) 1
+        $ Map.mapKeysWith (+) snd
+        $ ruleN `applyRule` start
 
 tableToRule :: Ord a => [(a,a,a)] -> Rule a
 tableToRule xs = Map.fromList [((l,r), [((l,m),1), ((m,r),1)]) | (l,r,m) <- xs]
 
-thenRule :: Ord a => Rule a -> Rule a -> Rule a
-thenRule x y = x <&> \m ->
-  Map.unionsWith (+) [(v *) <$> (y Map.! k) | (k,v) <- Map.toList m]
+applyRule :: Ord a => Rule a -> Map (a,a) Int -> Map (a,a) Int
+applyRule y m = Map.unionsWith (+) [(v *) <$> (y Map.! k) | (k,v) <- Map.toList m]

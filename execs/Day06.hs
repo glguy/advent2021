@@ -1,4 +1,5 @@
-{-# Language ImportQualifiedPost, QuasiQuotes #-}
+{-# Language ImportQualifiedPost, QuasiQuotes, OverloadedLists #-}
+{-# OPTIONS_GHC -w #-}
 {-|
 Module      : Main
 Description : Day 6 solution
@@ -13,9 +14,11 @@ Multiplying fish!
 -}
 module Main (main) where
 
-import Advent (counts, format)
+import Advent (counts, format, power)
 import Data.Map (Map)
 import Data.Map qualified as Map
+import Data.Functor ((<&>))
+import Data.Functor.Identity
 
 -- | >>> :main
 -- 376194
@@ -23,16 +26,14 @@ import Data.Map qualified as Map
 main :: IO ()
 main =
   do inp <- counts <$> [format|6 %u&,%n|]
-     let generations = sum <$> iterate step inp
-     print (generations !! 80)
-     print (generations !! 256)
+     let bigFish = maximum (Map.keys inp)
+     let oneStep = rule bigFish
+     let nSteps = power (fmap . applyRule) oneStep
+     print (sum (nSteps 80 `applyRule` inp))
+     print (sum (nSteps 256 `applyRule` inp))
 
--- | Advance the simulation one day.
---
--- >>> step (Map.fromList [(0,1),(1,2),(2,1),(6,1),(8,1)])
--- fromList [(0,2),(1,1),(5,1),(6,1),(7,1),(8,1)]
-step :: Map Int Int -> Map Int Int
-step xs = Map.fromListWith (+) (tick =<< Map.toList xs)
-  where
-    tick (0,n) = [(6,n), (8,n)]
-    tick (d,n) = [(d-1,n)]
+rule :: Int -> Map Int (Map Int Int)
+rule n = Map.fromList ((0, [(6,1), (8,1)]) : [(i, [(i-1, 1)]) | i <- [1..max n 8]])
+
+applyRule :: Map Int (Map Int Int) -> Map Int Int -> Map Int Int
+applyRule r m = Map.unionsWith (+) [(v *) <$> (r Map.! k) | (k,v) <- Map.toList m]
