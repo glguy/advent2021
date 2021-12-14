@@ -21,13 +21,7 @@ import Advent (format, power, counts)
 import Data.Map (Map)
 import Data.Map.Strict qualified as Map
 
--- | Associates pairs of elements followed by an element
--- with the resulting pairs of elements when applying the rule.
---
--- @[(a,b)] -> [((c,d),1), ((e,f),2)]@ says that an @a@ followed
--- by a @b@ will result in 1 @c@ followed by a @d@ and 2 @e@
--- followed by an @f@.
-type Rule a = Map (a,a) (Map (a,a) Int)
+type Rule a = Map a (Map a Int)
 
 -- | >>> :main
 -- 2068
@@ -39,7 +33,7 @@ main =
     print (solve rule 10 seed)
     print (solve rule 40 seed)
 
-solve :: Ord a => Rule a -> Integer -> [a] -> Int
+solve :: Ord a => Rule (a,a) -> Integer -> [a] -> Int
 solve rule n seed = maximum occ - minimum occ
   where
     ruleN = power (fmap . applyRule) rule n
@@ -50,8 +44,17 @@ solve rule n seed = maximum occ - minimum occ
         $ Map.mapKeysWith (+) snd
         $ applyRule ruleN start
 
-tableToRule :: Ord a => [(a,a,a)] -> Rule a
+-- | Generate a replacement rule map from a list of input productions
+--
+-- >>> tableToRule [('L','R','M')] -- LR -> M
+-- fromList [(('L','R'),fromList [(('L','M'),1),(('M','R'),1)])]
+tableToRule :: Ord a => [(a,a,a)] -> Rule (a,a)
 tableToRule xs = Map.fromList [((l,r), counts [(l,m), (m,r)]) | (l,r,m) <- xs]
 
-applyRule :: Ord a => Rule a -> Map (a,a) Int -> Map (a,a) Int
-applyRule y m = Map.unionsWith (+) [(v *) <$> y Map.! k | (k,v) <- Map.toList m]
+-- | Apply a replacement rule to a map of counts.
+--
+-- >>> :set -XOverloadedLists
+-- >>> applyRule [('a', [('b',1),('c',2)]),('z',[('y',1)])] [('a',10)]
+-- fromList [('b',10),('c',20)]
+applyRule :: Ord a => Rule a -> Map a Int -> Map a Int
+applyRule r m = Map.unionsWith (+) [(v *) <$> r Map.! k | (k,v) <- Map.toList m]
