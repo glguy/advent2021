@@ -184,3 +184,21 @@ toDigits base x
     go xs 0 = xs
     go xs n = case quotRem n base of
                 (n', digit) -> go (digit:xs) n'
+
+-- | Efficient exponentiation
+--
+-- >>> power (+) 1 10
+-- 10
+--
+-- >>> power (*) 2 10
+-- 1024 
+power :: (a -> a -> a) -> a -> Int -> a
+power (#) one n
+  | n < 1 = error ("power: bad argument " ++ show n)
+  | otherwise = go n
+  where
+    double x = x # x
+    go i
+      | 1 == i    = one
+      | even i    =       double (go (i `quot` 2))
+      | otherwise = one # double (go (i `quot` 2))
