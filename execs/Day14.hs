@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language ImportQualifiedPost, QuasiQuotes #-}
 {-|
 Module      : Main
 Description : Day 14 solution
