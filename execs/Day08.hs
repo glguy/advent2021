@@ -14,7 +14,11 @@ Figure out how the miswired segment display works.
 module Main (main) where
 
 import Advent (countBy, format, fromDigits)
-import Data.List (permutations, sort)
+import Data.Bits (Bits(setBit))
+import Data.Char (ord)
+import Data.IntMap (IntMap)
+import Data.IntMap qualified as IntMapInt
+import Data.List (permutations, sort, foldl')
 import Data.Map (Map)
 import Data.Map qualified as Map
 
@@ -31,15 +35,26 @@ main =
 wires :: String
 wires = ['a'..'g']
 
-segments :: Map String Int
-segments = Map.fromList (zip ["abcefg","cf","acdeg","acdfg","bcdf","abdfg","abdefg","acf","abcdefg","abcdfg"] [0..9])
+digits :: Map String Int
+digits = Map.fromList (zip ["abcefg","cf","acdeg","acdfg","bcdf","abdfg","abdefg","acf","abcdefg","abcdfg"] [0..9])
+
+-- | All the possible reassignments of wires
+mappings :: [Map Int Int]
+mappings =
+  [ Map.mapKeys (toBitMask . map (assignment Map.!)) digits
+    | wires' <- permutations wires
+    , let assignment = Map.fromList (zip wires wires')
+  ]
 
 -- | Given a list of segment examples and outputs decode the outputs.
 solve :: ([String], [String]) -> [Int]
 solve (xs, ys) = head
   [ out
-  | wires' <- permutations wires
-  , let assignment = Map.fromList (zip wires wires')
-  , let rewire x = Map.lookup (sort (map (assignment Map.!) x)) segments
+  | mapping <- mappings
+  , let rewire x = Map.lookup (toBitMask x) mapping
   , Just out <- [traverse rewire xs *> traverse rewire ys]
   ]
+
+-- | Convert the segment labels to a more efficient characteristic 'Int'
+toBitMask :: String -> Int
+toBitMask = foldl' (\acc x -> setBit acc (ord x - ord 'a')) 0
