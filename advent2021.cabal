@@ -52,7 +52,7 @@ library
     array            ^>= 0.5.4,
     containers       ^>= 0.6,
     template-haskell ^>= 2.17 || ^>= 2.18,
-    MemoTrie
+    MemoTrie         ^>= 0.6,
 
   if flag(bench)
     exposed-modules: Advent.Bench
