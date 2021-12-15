@@ -76,6 +76,7 @@ common day
   hs-source-dirs:      execs
   build-depends:       advent2021, base
   default-language:    Haskell2010
+  other-modules:       Dummy
 
 executable Day01
   import:              day
