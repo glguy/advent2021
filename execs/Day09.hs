@@ -28,11 +28,11 @@ type BasinIds = Array Coord (Maybe Coord)
 -- 964712
 main :: IO ()
 main =
-  do heights <- heightArray <$> getInputArray 9
-     let basinIds = heightsToBasinIds heights
+ do heights <- heightArray <$> getInputArray 9
+    let basinIds = heightsToBasinIds heights
 
-     print (sum [1+h | (c, Just h) <- assocs heights, Just c == basinIds!c])
-     print (product (top 3 (basinSizes basinIds)))
+    print (sum [1+h | (c, Just h) <- assocs heights, Just c == basinIds!c])
+    print (product (top 3 (basinSizes basinIds)))
 
 -- | Returns the @n@ largest elements of a list
 top :: Ord a => Int -> [a] -> [a]
@@ -50,11 +50,11 @@ heightsToBasinIds heights = basinIds
   where
     basinIds = array (bounds heights) [(c, basinId c =<< mbh) | (c, mbh) <- assocs heights]
     basinId c h =
-      do xs <- sequence [basinIds!x | x <- cardinal c, Just (Just xh) <- [arrIx heights x], xh<h]
-         case xs of
-           []                  -> Just c -- this is the lowest point in the basin
-           y:ys | all (y==) ys -> Just y -- all flows go to a unique basin
-                | otherwise    -> Nothing -- no unique basin
+     do xs <- sequence [basinIds!x | x <- cardinal c, Just (Just xh) <- [arrIx heights x], xh<h]
+        case xs of
+          []                  -> Just c -- this is the lowest point in the basin
+          y:ys | all (y==) ys -> Just y -- all flows go to a unique basin
+               | otherwise    -> Nothing -- no unique basin
 
 basinSizes :: BasinIds -> [Int]
 basinSizes = toList . counts . catMaybes . elems

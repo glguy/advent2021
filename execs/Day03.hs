@@ -39,9 +39,9 @@ mempty -- make B available for reify in format
 -- 2372923
 main :: IO ()
 main =
-  do inp <- [format|3 (@B*%n)*|]
-     print (harness pick1 inp)
-     print (harness pick2 inp)
+ do inp <- [format|3 (@B*%n)*|]
+    print (harness pick1 inp)
+    print (harness pick2 inp)
 
 -- | Use selection function to pick output bit by column
 pick1 :: ([B] -> B) -> [[B]] -> [B]

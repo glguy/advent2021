@@ -26,11 +26,11 @@ pure [] -- puts C into view of format's reify below
 -- 1872757425
 main :: IO ()
 main =
-  do inp <- [format|2 (@C %u%n)*|]
-     case foldMap' toS inp of
-       S dx dy1 dy2 ->
-         do print (dx*dy1)
-            print (dx*dy2)
+ do inp <- [format|2 (@C %u%n)*|]
+    case foldMap' toS inp of
+      S dx dy1 dy2 ->
+       do print (dx*dy1)
+          print (dx*dy2)
 
 -- | Computes the individual effect of a single instruction on a submarine.
 toS :: (C, Int) -> S

@@ -20,9 +20,9 @@ import Advent (counts, countBy, format)
 -- 21577
 main :: IO ()
 main =
-  do inp <- [format|5 (%u,%u -> %u,%u%n)*|]
-     print (solve (filter isStraight inp))
-     print (solve inp)
+ do inp <- [format|5 (%u,%u -> %u,%u%n)*|]
+    print (solve (filter isStraight inp))
+    print (solve inp)
 
 -- | Compute the number of points covered by more than one segment
 solve :: [(Int, Int, Int, Int)] -> Int

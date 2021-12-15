@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost, QuasiQuotes, OverloadedLists #-}
+{-# Language ImportQualifiedPost, QuasiQuotes #-}
 {-# OPTIONS_GHC -w #-}
 {-|
 Module      : Main
@@ -25,15 +25,15 @@ import Data.Functor.Identity
 -- 1693022481538
 main :: IO ()
 main =
-  do inp <- counts <$> [format|6 %u&,%n|]
-     let bigFish = maximum (Map.keys inp)
-     let oneStep = rule bigFish
-     let nSteps = power (fmap . applyRule) oneStep
-     print (sum (nSteps 80 `applyRule` inp))
-     print (sum (nSteps 256 `applyRule` inp))
+ do inp <- counts <$> [format|6 %u&,%n|]
+    let bigFish = maximum (Map.keys inp)
+    let oneStep = rule bigFish
+    let nSteps = power (fmap . applyRule) oneStep
+    print (sum (nSteps  80 `applyRule` inp))
+    print (sum (nSteps 256 `applyRule` inp))
 
 rule :: Int -> Map Int (Map Int Int)
-rule n = Map.fromList ((0, [(6,1), (8,1)]) : [(i, [(i-1, 1)]) | i <- [1..max n 8]])
+rule n = counts <$> Map.fromList ((0, [6,8]) : [(i, [i-1]) | i <- [1..max n 8]])
 
-applyRule :: Map Int (Map Int Int) -> Map Int Int -> Map Int Int
+applyRule :: (Ord a, Ord b) => Map a (Map b Int) -> Map a Int -> Map b Int
 applyRule r m = Map.unionsWith (+) [(v *) <$> (r Map.! k) | (k,v) <- Map.toList m]

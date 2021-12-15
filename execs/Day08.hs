@@ -22,11 +22,11 @@ import Data.Map qualified as Map
 -- 355
 -- 983030
 main :: IO ()
-main = do
-  inp <- [format|8 (%s&  %| %s& %n)*|]
-  let outs = map solve inp
-  print (countBy (`elem` [1,4,7,8]) (concat outs))
-  print (sum (map (fromDigits 10) outs))
+main =
+ do inp <- [format|8 (%s&  %| %s& %n)*|]
+    let outs = map solve inp
+    print (countBy (`elem` [1,4,7,8]) (concat outs))
+    print (sum (map (fromDigits 10) outs))
 
 wires :: String
 wires = ['a'..'g']

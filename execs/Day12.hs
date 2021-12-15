@@ -26,13 +26,14 @@ import Data.IntMap qualified as IntMap
 import Data.List (mapAccumL)
 import Data.Map qualified as Map
 import Data.MemoTrie (memo3)
-
+import Debug.Trace
 -- | >>> :main
 -- 3761
 -- 99138
 main :: IO ()
 main =
  do inp <- compress . toAdj . label <$> [format|12 (%s-%s%n)*|]
+    print inp
     print (start inp False)
     print (start inp True)
 
@@ -42,15 +43,16 @@ toAdj inp = IntMap.fromListWith (++)
   [(x,[y]) | (a,b) <- inp, (x,y) <- [(a,b),(b,a)], y /= 0, x /= 1]
 
 -- | Compute direct paths through a big cave to the next small cave.
-compress :: IntMap [Int] -> IntMap [Int]
+compress :: IntMap [Int] -> IntMap (IntMap Int)
 compress long = IntMap.filterWithKey (\k _ -> k >= 0) short
   where
     short = shorten <$> long
-    shorten xs = [y | x <- xs, y <- if x >= 0 then [x] else short IntMap.! x]
+    shorten xs = IntMap.unionsWith (+)
+      [if x >= 0 then IntMap.singleton x 1 else short IntMap.! x | x <- xs]
 
 -- | Search the cave exploration given the directed edges and a
 -- flag if we're allowed to visit a small cave an extra time.
-start :: IntMap [Int] -> Bool -> Int
+start :: IntMap (IntMap Int) -> Bool -> Int
 start paths = go 0 SmallSet.empty 
   where
     go = memo3 \here seen extra ->
@@ -60,7 +62,7 @@ start paths = go 0 SmallSet.empty
           | not (SmallSet.member next seen) = go next (SmallSet.insert next seen) extra
           | extra     = go next seen False
           | otherwise = 0
-      in sum (map f (paths IntMap.! here))
+      in sum [v * f k | (k,v) <- IntMap.toList (paths IntMap.! here)]
 
 -- | Map all the cave names to integers. Use negative integers for big caves.
 label :: [(String, String)] -> [(Int,Int)]

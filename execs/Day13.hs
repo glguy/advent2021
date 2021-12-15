@@ -33,13 +33,13 @@ mempty -- template haskell staging
 -- █  █ █     ██  █  █ █    ███  ████ █  █
 main :: IO ()
 main =
-  do (points, folds) <- [format|13 (%u,%u%n)*%n(fold along @A=%u%n)*|]
-     let pointSet = Set.fromList [C y x | (x, y) <- points]
-         states   = scanl (flip foldPoints) pointSet folds
-         p1       = states !! 1 -- points after first fold
-         p2       = last states -- points after last fold
-     print (length p1)
-     putStr (drawCoords p2)
+ do (points, folds) <- [format|13 (%u,%u%n)*%n(fold along @A=%u%n)*|]
+    let pointSet = Set.fromList [C y x | (x, y) <- points]
+        states   = scanl (flip foldPoints) pointSet folds
+        p1       = states !! 1 -- points after first fold
+        p2       = last states -- points after last fold
+    print (length p1)
+    putStr (drawCoords p2)
 
 -- | 2-dimensional fold the set of points over a line.
 foldPoints :: (A, Int) {- ^ fold line -} -> Set Coord -> Set Coord

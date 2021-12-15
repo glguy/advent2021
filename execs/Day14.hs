@@ -21,8 +21,6 @@ import Advent (format, power, counts)
 import Data.Map (Map)
 import Data.Map.Strict qualified as Map
 
-type Rule a = Map a (Map a Int)
-
 -- | >>> :main
 -- 2068
 -- 2158894777814
@@ -33,7 +31,7 @@ main =
     print (solve rule 10 seed)
     print (solve rule 40 seed)
 
-solve :: Ord a => Rule (a,a) -> Integer -> [a] -> Int
+solve :: Ord a => Map (a,a) (Map (a,a) Int) -> Integer -> [a] -> Int
 solve rule n seed = maximum occ - minimum occ
   where
     ruleN = power (fmap . applyRule) rule n
@@ -48,7 +46,7 @@ solve rule n seed = maximum occ - minimum occ
 --
 -- >>> tableToRule [('L','R','M')] -- LR -> M
 -- fromList [(('L','R'),fromList [(('L','M'),1),(('M','R'),1)])]
-tableToRule :: Ord a => [(a,a,a)] -> Rule (a,a)
+tableToRule :: Ord a => [(a,a,a)] -> Map (a,a) (Map (a,a) Int)
 tableToRule xs = Map.fromList [((l,r), counts [(l,m), (m,r)]) | (l,r,m) <- xs]
 
 -- | Apply a replacement rule to a map of counts.
@@ -56,5 +54,5 @@ tableToRule xs = Map.fromList [((l,r), counts [(l,m), (m,r)]) | (l,r,m) <- xs]
 -- >>> :set -XOverloadedLists
 -- >>> applyRule [('a', [('b',1),('c',2)]),('z',[('y',1)])] [('a',10)]
 -- fromList [('b',10),('c',20)]
-applyRule :: Ord a => Rule a -> Map a Int -> Map a Int
+applyRule :: (Ord a, Ord b) => Map a (Map b Int) -> Map a Int -> Map b Int
 applyRule r m = Map.unionsWith (+) [(v *) <$> r Map.! k | (k,v) <- Map.toList m]

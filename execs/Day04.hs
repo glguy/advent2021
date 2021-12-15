@@ -23,10 +23,10 @@ type Board = [[Int]]
 -- 26878
 main :: IO ()
 main =
-  do (calls, boards) <- [format|4 %u&,%n(%n(( *%u)+%n)+)*|]
-     let outcomes = play calls boards
-     print (head outcomes)
-     print (last outcomes)
+ do (calls, boards) <- [format|4 %u&,%n(%n(( *%u)+%n)+)*|]
+    let outcomes = play calls boards
+    print (head outcomes)
+    print (last outcomes)
 
 -- | Given the called numbers and initial boards return a list of
 -- winning scores in order of winning.

@@ -19,10 +19,10 @@ import Data.List (sort)
 -- 1605968119
 main :: IO ()
 main =
-  do inp <- getInputLines 10
-     let (p1, p2) = partitionEithers (validate [] <$> inp)
-     print (sum (map cost1 p1))
-     print (median (map cost2 p2))
+ do inp <- getInputLines 10
+    let (p1, p2) = partitionEithers (validate [] <$> inp)
+    print (sum (map cost1 p1))
+    print (median (map cost2 p2))
 
 -- | Return the median of an odd-length list
 --
