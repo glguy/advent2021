@@ -87,9 +87,11 @@ right (C y x) = C y (x+1)
 invert :: Coord -> Coord
 invert (C y x) = C x y
 
+-- | Invert the x coordinate
 flipX :: Coord -> Coord
 flipX (C y x) = C y (-x)
 
+-- | Invert the y coordinate
 flipY :: Coord -> Coord
 flipY (C y x) = C (-y) x
 

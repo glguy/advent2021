@@ -11,54 +11,66 @@ Maintainer  : emertens@gmail.com
 Finding the shortest route through a cave, and then
 finding the shortest route through a slightly larger cave.
 
+This solution uses Djikstra's Algorithm to perform a
+shortest path search through the cave. (A* with a zero
+heuristic degenerates to this)
+
+For part 2 this solution transforms the lookup coordinates
+rather than to build a larger cave array. The reason for this
+is to reduce memory pressure especially when running the
+search on much larger maps.
+
 -}
 module Main (main) where
 
-import Advent.Coord
-import Advent.Input (getInputMap)
-import Advent.Search (astar)
-import Data.Char
-import Data.Map (Map)
-import Data.Map qualified as Map
-import Data.Maybe (fromJust)
+import Advent (arrIx, getInputArray)
+import Advent.Coord (Coord(..), cardinal, origin, addCoord)
+import Advent.Search (AStep(..), astar)
+import Data.Array.Unboxed ((!), amap, IArray(bounds), UArray)
+import Data.Char (digitToInt)
+import Data.Maybe (fromMaybe, maybeToList)
+import Data.Word (Word8)
 
 -- | >>> :main
 -- 698
 -- 3022
 main :: IO ()
 main =
- do inp <- fmap digitToInt <$> getInputMap 15
-    print (solve inp)
-    print (solve (extendCave inp))
+ do inp <- amap (fromIntegral . digitToInt) <$> getInputArray 15
+    let end = snd (bounds inp)
+    print (solve end (arrIx inp))
+    let (end2, inp2) = extendCave inp
+    print (solve end2 inp2)
 
 -- | Compute the risk score traveling through a cave.
-solve :: Map Coord Int -> Int
-solve m = fromJust (lookup end costs)
+solve :: Coord -> (Coord -> Maybe Word8) -> Int
+solve end m = fromMaybe (error "no path") (lookup end costs)
   where
-    end = maximum (Map.keys m)
     costs = astar step origin
-    step here = [ (next, cost, 0)
+    step here = [ AStep next (fromIntegral cost) 0
                 | next <- cardinal here
-                , Just cost <- [Map.lookup next m]]
+                , cost <- maybeToList (m next)]
 
 -- | Build a larger cave by tiling the input cave in a 5x5
 -- grid. Added caves have their risk values updated according
 -- to their new locations.
-extendCave :: Map Coord Int -> Map Coord Int
-extendCave m = mconcat
-  [ (fixRisk . (tx + ty +)) <$>
-    Map.mapKeysMonotonic (addCoord dy . addCoord dx) m
-    | tx <- [0..4], let dx = scaleCoord (wx*tx) east
-    , ty <- [0..4], let dy = scaleCoord (wy*ty) south
-    ]
+extendCave :: UArray Coord Word8 -> (Coord, Coord -> Maybe Word8)
+extendCave m = end `seq` (end, f)
   where
-    C hiy hix = maximum (Map.keys m)
-    wy = hiy+1
-    wx = hix+1 
+    (C 0 0, end0@(C hiy hix)) = bounds m
+    wy  = 1+hiy
+    wx  = 1+hix
+    end = addCoord (C (4*wy) (4*wx)) end0
+    f (C y x) =
+      case (divMod y wy, divMod x wx) of
+        ((ty, y'),(tx,x'))
+          | 0 <= ty, ty <= 4, 0 <= tx, tx <= 4 ->
+            Just $! fixRisk (m ! C y' x' + fromIntegral (tx + ty))
+        _ -> Nothing
 
 -- | Risks are defined to roll over from 9 back to 1
 --
--- >>> fixRisk <$> [1,5,9,12]
--- [1,5,9,3]
-fixRisk :: Int -> Int
+-- >>> fixRisk <$> [1,5,9,10,12]
+-- [1,5,9,1,3]
+fixRisk :: Word8 -> Word8
 fixRisk x = (x - 1) `mod` 9 + 1
