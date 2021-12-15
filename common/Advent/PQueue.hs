@@ -5,6 +5,9 @@ Description : Int-priority min queue
 Copyright   : (c) Eric Mertens, 2018
 License     : ISC
 Maintainer  : emertens@gmail.com
+
+Priority queue with 'Int' priorities returning smallest priority first.
+
 -}
 {-# Language PatternSynonyms, ViewPatterns, DeriveTraversable #-}
 {-# Options_GHC -Wno-name-shadowing #-}
@@ -25,7 +28,7 @@ module Advent.PQueue
   ) where
 
 import Data.IntMap (IntMap)
-import Data.IntMap qualified as IntMap
+import Data.IntMap.Strict qualified as IntMap
 
 -- | Priority queue. No guarantees are made regarding the order
 -- entries with the same priority are returned in.

@@ -10,7 +10,18 @@ These implementations provide a lazily-generated list of visited
 states with the order defined by the search strategy.
 
 -}
-module Advent.Search where
+module Advent.Search (
+  -- * Depth-first search
+  dfs, dfsOn,
+
+  -- * Breadth-first search
+  bfs, bfsOn, bfsOnN,
+
+  -- * A* search
+  AStep(..),
+  astar, astarOn,
+
+  ) where
 
 import Advent.PQueue qualified as PQueue
 import Advent.Queue qualified as Queue
@@ -65,12 +76,13 @@ bfsOn ::
   [a]        {- ^ reachable states          -}
 bfsOn rep next start = bfsOnN rep next [start]
 
-{-# INLINE [0] bfsOnN #-}
+-- | Generalization of 'bfsOn' allowing multiple
+-- initial states to be considered.
 bfsOnN ::
   Ord r =>
   (a -> r)   {- ^ representative function   -} ->
   (a -> [a]) {- ^ successor state generator -} ->
-  [a]         {- ^ initial state             -} ->
+  [a]        {- ^ initial states            -} ->
   [a]        {- ^ reachable states          -}
 bfsOnN rep next start = loop Set.empty (Queue.fromList start)
   where
@@ -83,6 +95,7 @@ bfsOnN rep next start = loop Set.empty (Queue.fromList start)
           r     = rep x
           seen' = Set.insert r seen
           q'    = Queue.appendList (next x) q
+{-# INLINE [0] bfsOnN #-}
 
 {-# RULES "bfsOn/Int" bfsOn = bfsOnInt #-}
 {-# INLINE bfsOnInt #-}
