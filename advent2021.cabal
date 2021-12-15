@@ -143,4 +143,4 @@ executable Day14
 executable Day15
   import:              day
   main-is:             Day15.hs
-  build-depends:       containers
+  build-depends:       array
