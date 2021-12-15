@@ -26,14 +26,13 @@ import Data.IntMap qualified as IntMap
 import Data.List (mapAccumL)
 import Data.Map qualified as Map
 import Data.MemoTrie (memo3)
-import Debug.Trace
+
 -- | >>> :main
 -- 3761
 -- 99138
 main :: IO ()
 main =
  do inp <- compress . toAdj . label <$> [format|12 (%s-%s%n)*|]
-    print inp
     print (start inp False)
     print (start inp True)
 

@@ -37,12 +37,12 @@ fromList = foldl' (flip insert) empty
 
 -- | Return an ordered list of the elements in the set
 toList :: SmallSet -> [Int]
-toList (SmallSet x) = go 0 x
+toList (SmallSet s) = go 0 s
   where
     go offset n
       | 0 == n     = []
       | next == 63 = [63] -- avoid shift overflow
-      | seq x True = x : go (1+x) (n `unsafeShiftR` (next+1))
+      | otherwise  = x : go (1+x) (n `unsafeShiftR` (next+1))
       where
         next = countTrailingZeros n
         x    = offset + next

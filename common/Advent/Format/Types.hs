@@ -63,11 +63,11 @@ interesting s =
     Literal{}           -> False
 
 acceptsEmpty :: Format -> Bool
-acceptsEmpty x =
-  case x of
-    Many x              -> True
+acceptsEmpty fmt =
+  case fmt of
+    Many _              -> True
     Some x              -> acceptsEmpty x
-    SepBy x _           -> acceptsEmpty x
+    SepBy _ _           -> True
     Alt x y             -> acceptsEmpty x || acceptsEmpty y
     Follow x y          -> acceptsEmpty x && acceptsEmpty y
     Empty               -> True
@@ -84,8 +84,8 @@ acceptsEmpty x =
 
 -- | Render a parsed format string back to the input syntax.
 showFormat :: Int {- ^ surrounding precedence -} -> Format -> ShowS 
-showFormat p x =
-  case x of
+showFormat p fmt =
+  case fmt of
     Many x              -> showFormat 3 x . showChar '*'
     Some x              -> showFormat 3 x . showChar '+'
     Gather x            -> showFormat 3 x . showChar '!'

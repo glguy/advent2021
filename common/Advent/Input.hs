@@ -10,14 +10,9 @@ Maintainer  : emertens@gmail.com
 module Advent.Input where
 
 import Advent.Coord (Coord(..), coordLines)
-import Control.Applicative ((<|>))
 import Data.Array.Unboxed qualified as A
-import Data.Foldable (toList)
-import Data.Ord (comparing)
 import Data.Map (Map)
 import Data.Map.Strict qualified as SMap
-import Data.Set (Set)
-import Data.Set qualified as Set
 import System.Environment (getArgs)
 import Text.Printf (printf)
 

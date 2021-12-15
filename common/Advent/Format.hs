@@ -180,9 +180,9 @@ toReadP s =
 toType :: Format -> TypeQ
 toType fmt =
   case fmt of
-    Literal xs -> [t| () |]
+    Literal _ -> [t| () |]
 
-    Gather p -> [t| String |]
+    Gather _ -> [t| String |]
 
     Named n
       | isUpper (head n) -> conT (mkName n)

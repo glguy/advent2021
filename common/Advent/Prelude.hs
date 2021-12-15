@@ -9,7 +9,6 @@ Maintainer  : emertens@gmail.com
 -}
 module Advent.Prelude where
 
-import Control.Applicative ((<|>))
 import Data.Array.Unboxed qualified as A
 import Data.Foldable (toList)
 import Data.List (foldl', inits, sortBy, tails, mapAccumL)
