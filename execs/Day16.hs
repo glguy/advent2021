@@ -25,7 +25,7 @@ import Text.ParserCombinators.ReadP qualified as ReadP
 main :: IO ()
 main =
  do inp <- [format|16 %s%n|]
-    let [p] = parsePackets (decodeHex =<< inp)
+    let p = parse (decodeHex =<< inp)
     print (vers p)
     print (eval p)
 
@@ -49,10 +49,10 @@ eval (Op _ 6 [x,y]) = if eval x <  eval y then 1 else 0
 eval (Op _ 7 [x,y]) = if eval x == eval y then 1 else 0
 eval o = error ("bad expression: " ++ show o)
 
-parsePackets :: String -> [Packet]
-parsePackets xs =
-  case ReadP.readP_to_S (many pPacket <* skipPad 3 <* ReadP.eof) xs of
-    [(ps,_)] -> ps
+parse :: String -> Packet
+parse xs =
+  case ReadP.readP_to_S pPacket xs of
+    [(p,_)] -> p
     _ -> error ("Failed parsing: " ++ show xs)
 
 -- | Parse a single packet
@@ -64,23 +64,18 @@ pPacket =
       then Lit v   <$> pLiteral
       else Op  v t <$> pArguments
 
--- | Skip up to @n@ padding zeros
-skipPad :: Int -> ReadP ()
-skipPad 0 = pure ()
-skipPad n = ReadP.optional (ReadP.char '0' >> skipPad (n-1))
-
 -- | Parse a fixed-width big-endian, binary number
 field :: Int -> ReadP Int
 field n = fromDigits 2 . map digitToInt <$> ReadP.count n ReadP.get
 
 -- | Parse a variable-sized number chunk
 pLiteral :: ReadP Int
-pLiteral = fromDigits 16 <$> go
+pLiteral = go 0
   where
-    go =
+    go acc =
      do more <- (1==) <$> field 1
         chunk <- field 4
-        if more then (chunk:) <$> go else pure [chunk]
+        (if more then go else pure) (16 * acc + chunk)
 
 -- | Parse a list of sub-packets
 pArguments :: ReadP [Packet]
@@ -89,8 +84,17 @@ pArguments =
     if byCount
       then do n <- field 11
               ReadP.count n pPacket
-      else do size <- field 15
-              parsePackets <$> ReadP.count size ReadP.get
+      else pSized =<< field 15
+
+-- | Parse a list of packets that fit exactly in @n@ bits
+pSized :: Int -> ReadP [Packet]
+pSized 0 = pure []
+pSized n =
+  case compare n 0 of
+    LT -> ReadP.pfail
+    GT -> do (str, p) <- ReadP.gather pPacket
+             (p:) <$> pSized (n - length str)
+    EQ -> pure []
 
 -- | Decode a hex character into 4 bits
 decodeHex :: Char -> String
