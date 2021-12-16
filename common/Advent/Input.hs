@@ -6,6 +6,10 @@ Copyright   : (c) Eric Mertens, 2021
 License     : ISC
 Maintainer  : emertens@gmail.com
 
+This module provides input files in some of the most commonly
+needed formats. It either automatically loads from an @inputs@
+directory, or takes the input file as a command-line argument.
+
 -}
 module Advent.Input where
 

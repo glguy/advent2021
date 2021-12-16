@@ -6,6 +6,8 @@ Copyright   : (c) Eric Mertens, 2021
 License     : ISC
 Maintainer  : emertens@gmail.com
 
+A compact set type for when you have very few elements to track.
+
 -}
 module Advent.SmallSet where
 

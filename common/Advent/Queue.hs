@@ -15,7 +15,7 @@ import Data.Monoid   (Dual(..))
 import Data.Coerce   (coerce)
 
 -- | FIFO Queue implementation
-data Queue a = Queue [a] !Int [a] !Int
+data Queue a = Queue [a] [a] !Int
 
 {-# COMPLETE (:<|), Empty #-}
 
@@ -24,9 +24,9 @@ data Queue a = Queue [a] !Int [a] !Int
 -- >>> Empty :: Queue Char
 -- fromList ""
 pattern Empty :: Queue a
-pattern Empty <- Queue [] _ _ _
+pattern Empty <- Queue [] _ _
   where
-    Empty = Queue [] 0 [] 0
+    Empty = Queue [] [] 0
 
 -- | Pattern for 'pop'
 --
@@ -41,15 +41,24 @@ pattern x :<| xs <- (pop -> Just (x, xs))
 -- fromList "abcz"
 (|>) :: Queue a -> a -> Queue a
 q |> x = snoc x q
+{-# INLINE (|>) #-}
 
 -- | Fold over elements in the order they would be returned by pop
 --
 -- >>> toList (fromList "abc")
 -- "abc"
 instance Foldable Queue where
-  toList    (Queue l _ r _) = l ++ reverse r
-  foldr f z (Queue l _ r _) = foldr f (foldl (flip f) z r) l
-  foldMap f (Queue l _ r _) = foldMap f l <> getDual (foldMap (coerce f) r)
+  null      (Queue l _ _) = null l
+  length    (Queue l r _) = length l + length r
+  elem x    (Queue l r _) = elem x l || elem x r
+  sum       (Queue l r _) = sum l + sum r
+  foldMap _ (Queue [] _ _) = mempty
+  foldMap f (Queue (x:l) r 0) = f x <> rot l r
+    where
+      rot []     (y:_ ) = f y
+      rot (x:xs) (y:ys) = f x <> rot xs ys <> f y
+  foldMap f (Queue (x:l) r i) = f x <> foldMap f (Queue l r (i-1))
+
 
 -- | Renders using 'fromList' syntax.
 --
@@ -75,27 +84,12 @@ instance Read a => Read (Queue a) where
 -- >>> singleton 'a'
 -- fromList "a"
 singleton :: a -> Queue a
-singleton x = Queue [x] 1 [] 0
+singleton x = Queue [x] [] 1
 
 -- | Construct a queue from a list. The head of the list will
 -- be the first element returned by 'pop'
 fromList :: [a] -> Queue a
-fromList xs = Queue xs (length xs) [] 0
-
--- | Internal smart constructor for building queues that maintain
--- the invariant that the rear component is never longer than the
--- front component.
-mkQueue :: Queue a -> Queue a
-mkQueue q@(Queue f lenF r lenR)
-  | lenR <= lenF = q
-  | otherwise    = Queue (f ++ reverse r) (lenF + lenR) [] 0
-
--- | Add a new element to the end of a queue.
---
--- >>> snoc 'z' (fromList "abc")
--- fromList "abcz"
-snoc :: a -> Queue a -> Queue a
-snoc x (Queue f lenF r lenR) = mkQueue (Queue f lenF (x:r) (1+lenR))
+fromList xs = Queue xs [] (length xs)
 
 -- | Append many items onto a queue. The items will pop from the queue
 -- in the same order as they are in the given list.
@@ -111,5 +105,20 @@ appendList xs q = foldl' (|>) q xs
 -- >>> pop (fromList "abc")
 -- Just ('a',fromList "bc")
 pop :: Queue a -> Maybe (a, Queue a)
-pop (Queue (x:f) lenF r lenR) = Just (x, mkQueue (Queue f (lenF-1) r lenR))
-pop _                         = Nothing
+pop (Queue (x:f) r s) = Just (x, exec f r s)
+pop _                 = Nothing
+
+-- | Add a new element to the end of a queue.
+--
+-- >>> snoc 'z' (fromList "abc")
+-- fromList "abcz"
+snoc :: a -> Queue a -> Queue a
+snoc x (Queue f r s) = exec f (x:r) s
+
+exec :: [a] -> [a] -> Int -> Queue a
+exec f r 0    = fromList (rotate f r [])
+exec f r i = Queue f r (i-1)
+
+rotate []     (y:_ ) a = y : a
+rotate (x:xs) (y:ys) a = x : rotate xs ys (y:a)
+rotate _      _      _ = error "Advent.Queue.rotate: panic"

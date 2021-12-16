@@ -6,6 +6,9 @@ Copyright   : (c) Eric Mertens, 2018-2021
 License     : ISC
 Maintainer  : emertens@gmail.com
 
+Various helper functions for common operations needed in
+Advent of Code problems.
+
 -}
 module Advent.Prelude where
 
