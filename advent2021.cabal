@@ -145,3 +145,7 @@ executable Day15
   import:              day
   main-is:             Day15.hs
   build-depends:       array
+
+executable Day16
+  import:              day
+  main-is:             Day16.hs
