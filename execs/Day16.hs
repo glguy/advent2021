@@ -160,7 +160,7 @@ pArguments =
       else do n <- field 15; pSized n
 
 -- | Parse a list of packets that fit exactly in @n@ bits
-pSized :: Int -> ReadP [Packet]
+pSized :: Int {- ^ bit width -} -> ReadP [Packet]
 pSized n =
   case compare n 0 of
     LT -> ReadP.pfail
