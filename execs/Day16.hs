@@ -88,7 +88,6 @@ pArguments =
 
 -- | Parse a list of packets that fit exactly in @n@ bits
 pSized :: Int -> ReadP [Packet]
-pSized 0 = pure []
 pSized n =
   case compare n 0 of
     LT -> ReadP.pfail
