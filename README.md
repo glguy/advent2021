@@ -2,7 +2,7 @@
 
 These are my Advent of Code 2021 solutions. I generally try to focus on making clean and documented Haskell solutions to each puzzle.
 
-We'll be chatting about AoC on IRC all December. You can find AoC discussion on [Libera Chat](https://libera.chat)'s `##adventofcode` and `#haskell` ([webchat](https://web.libera.chat/#adventofcode))
+We'll be chatting about AoC on IRC all December. You can find AoC discussion on [Libera Chat](https://libera.chat)'s `#adventofcode` and `#haskell` ([webchat](https://web.libera.chat/#adventofcode))
 
 ## Building
 
