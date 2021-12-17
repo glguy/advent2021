@@ -53,11 +53,14 @@ main =
 
 -- | Run a simulation returning the maximum height seen if
 -- the probe ever succeeds in hitting the target.
+--
+-- >>> sim 20 30 (-10) (-5) 6 9
+-- Just 45
 sim ::
-  Int {- ^ x lo -} ->
-  Int {- ^ x hi -} ->
-  Int {- ^ y lo -} ->
-  Int {- ^ y hi -} ->
+  Int {- ^ target x lo -} ->
+  Int {- ^ target x hi -} ->
+  Int {- ^ target y lo -} ->
+  Int {- ^ target y hi -} ->
   Int {- ^ initial x velocity -} ->
   Int {- ^ initial y velocity -} ->
   Maybe Int {- ^ maximum height if successful -}
