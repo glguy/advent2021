@@ -31,7 +31,8 @@ module Main (main) where
 import Advent.Format (format)
 import Control.Monad (when)
 
-data Probe = P !Int !Int !Int !Int
+-- | The state of a traveling probe
+data Probe = P !Int !Int !Int !Int -- ^ x-position y-position x-velocity y-velocity
   deriving Show
 
 -- | Advance the probe one timestep
