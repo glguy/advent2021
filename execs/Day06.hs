@@ -1,5 +1,4 @@
 {-# Language ImportQualifiedPost, QuasiQuotes #-}
-{-# OPTIONS_GHC -w #-}
 {-|
 Module      : Main
 Description : Day 6 solution
@@ -9,7 +8,9 @@ Maintainer  : emertens@gmail.com
 
 <https://adventofcode.com/2021/day/6>
 
-Multiplying fish!
+Multiplying fish! To make this problem tractible
+track how many of each age of fish we have rather
+than tracking all the individual ages of the fish.
 
 -}
 module Main (main) where

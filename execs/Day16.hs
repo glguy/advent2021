@@ -17,7 +17,7 @@ ReadP's 'ReadP.gather' operation is useful for computing
 the bitsize of a packet which comes up in some of the
 operator packets.
 
-= Examples 
+= Examples
 
 >>> vers <$> parse (decodeHex "8A004A801A8002F478")
 Just 16

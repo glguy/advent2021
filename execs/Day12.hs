@@ -52,7 +52,7 @@ compress long = IntMap.filterWithKey (\k _ -> k >= 0) short
 -- | Search the cave exploration given the directed edges and a
 -- flag if we're allowed to visit a small cave an extra time.
 start :: IntMap (IntMap Int) -> Bool -> Int
-start paths = go 0 SmallSet.empty 
+start paths = go 0 SmallSet.empty
   where
     go = memo3 \here seen extra ->
       let
