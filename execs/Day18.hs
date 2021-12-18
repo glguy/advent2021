@@ -44,18 +44,22 @@ add x y = reduce (x :+ y)
 
 -- | Reduce an expression until it won't reduce
 reduce :: X -> X
-reduce x = maybe x reduce (explode x <|> split x)
+reduce x = maybe x reduce (explode <$> unstable x <|> split x)
 
--- | Replace the first pair of numbers at depth 4 with a @0@
--- and add the left and right components to the nearest number
--- on the left and right respectively.
-explode :: X -> Maybe X
-explode = go (4::Int) Top
+-- | Find the first pair of numbers at depth 4.
+unstable :: X -> Maybe (Int, Int, Zip)
+unstable = go (4::Int) Top
   where
-    go 0 z (N l :+ N r) = Just (fromZip (N 0) (addUpL l (addUpR r z)))
+    go 0 z (N l :+ N r) = Just (l, r, z)
     go 0 _ _ = Nothing
     go d z (l :+ r) = go (d-1) (ZL r z) l <|> go (d-1) (ZR l z) r
     go _ _ _ = Nothing
+
+-- Add the left and right components to the nearest number
+-- on the left and right respectively. Replace the hole with
+-- a zero.
+explode :: (Int, Int, Zip) -> X
+explode (l, r, z) = fromZip (N 0) (addUp l r z)
 
 -- | Replace the first number with value 10 or more with a pair
 -- of it divided in half rounding first down then up.
@@ -82,6 +86,11 @@ fromZip :: X -> Zip -> X
 fromZip r (ZR l z) = fromZip (l :+ r) z
 fromZip l (ZL r z) = fromZip (l :+ r) z
 fromZip l Top = l
+
+addUp :: Int -> Int -> Zip -> Zip
+addUp ln rn (ZR l z) = ZR (addDownR ln l) (addUpR rn z)
+addUp ln rn (ZL r z) = ZL (addDownL rn r) (addUpL ln z)
+addUp _ _ Top = Top
 
 addUpL :: Int -> Zip -> Zip
 addUpL _ Top = Top
@@ -119,11 +128,12 @@ magnitude (l :+ r) = 3 * magnitude l + 2 * magnitude r
 -- >>> parse "[[[[0,9],2],3],4]"
 -- (((N 0 :+ N 9) :+ N 2) :+ N 3) :+ N 4
 parse :: String -> X
-parse (readP_to_S pList -> [(x,_)]) = x
+parse (readP_to_S pX -> [(x,_)]) = x
 parse _ = error "bad input"
 
 -- | ReadP expression parser
-pList :: ReadP X
-pList = (between (char '[') (char ']')
-           ((:+) <$> pList <* char ',' <*> pList))
-    +++ (N . read <$> munch1 isDigit)
+pX :: ReadP X
+pX = pair +++ number
+  where
+    pair = (:+) <$ char '[' <*> pX <* char ',' <*> pX <* char ']'
+    number = N . read <$> munch1 isDigit
