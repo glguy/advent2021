@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, ViewPatterns #-}
+{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, ViewPatterns, LambdaCase #-}
 {-|
 Module      : Main
 Description : Day 18 solution
@@ -20,7 +20,7 @@ import Advent (getInputLines)
 import Control.Applicative ((<|>))
 import Data.Char (isDigit)
 import Data.List (tails)
-import Text.ParserCombinators.ReadP
+import Text.ParserCombinators.ReadP (ReadP, char, munch1, readP_to_S)
 
 -- | >>> :main
 -- 3551
@@ -32,83 +32,41 @@ main =
     print (maximum [magnitude (add x y) `max` magnitude (add y x)
                    | x:ys <- tails inp, y <- ys])
 
--- | A snailfish expression
-data X
-  = X :+ X -- ^ pair
-  | N Int  -- ^ regular number
-  deriving Show
+-- * Snailfish operations
 
 -- | Add two expressions and reduce them
-add :: X -> X -> X
-add x y = reduce (x :+ y)
+add :: Tree Int -> Tree Int -> Tree Int
+add x y = reduce (x :+: y)
 
 -- | Reduce an expression until it won't reduce
-reduce :: X -> X
+reduce :: Tree Int -> Tree Int
 reduce x = maybe x reduce (explode <$> unstable x <|> split x)
 
--- | Find the first pair of numbers at depth 4.
-unstable :: X -> Maybe (Int, Int, Zip)
-unstable = go (4::Int) Top
+-- | Find the left-most pair at depth 4.
+unstable :: Tree a -> Maybe (a, a, Zip a)
+unstable = go 4 []
   where
-    go 0 z (N l :+ N r) = Just (l, r, z)
+    go :: Int -> Zip a -> Tree a -> Maybe (a, a, Zip a)
+    go 0 z (Leaf l :+: Leaf r) = Just (l, r, z)
     go 0 _ _ = Nothing
-    go d z (l :+ r) = go (d-1) (ZL r z) l <|> go (d-1) (ZR l z) r
+    go d z (l :+: r) = go (d-1) ((R,r):z) l <|> go (d-1) ((L,l):z) r
     go _ _ _ = Nothing
 
 -- Add the left and right components to the nearest number
 -- on the left and right respectively. Replace the hole with
 -- a zero.
-explode :: (Int, Int, Zip) -> X
-explode (l, r, z) = fromZip (N 0) (addUp l r z)
+explode :: (Int, Int, Zip Int) -> Tree Int
+explode (l, r, z)
+  = fromZip (Leaf 0)
+  $ appUp L (appR (l+))
+  $ appUp R (appL (r+)) z
 
 -- | Replace the first number with value 10 or more with a pair
 -- of it divided in half rounding first down then up.
-split :: X -> Maybe X
-split (N x)
-  | x >= 10 = Just (N (x`div`2) :+ N ((x+1)`div`2))
-  | otherwise = Nothing
-split (l :+ r) = (:+ r) <$> split l <|> (l :+) <$> split r
-
--- * Expression zippers
-
--- | The type of a hole in an expression tree. Values of
--- this type describe a location in an 'X' that's missing
--- a subterm. This term can be replaced with 'fromZip' giving
--- you the complete 'X' back.
-data Zip
-  = ZR X Zip -- ^ The hole is on the right side of a pair
-  | ZL X Zip -- ^ The hole is on the left side of a pair
-  | Top      -- ^ the topmost hole
-  deriving Show
-
--- | Rebuild an expression given a zipper and the value to put in the hole.
-fromZip :: X -> Zip -> X
-fromZip r (ZR l z) = fromZip (l :+ r) z
-fromZip l (ZL r z) = fromZip (l :+ r) z
-fromZip l Top = l
-
-addUp :: Int -> Int -> Zip -> Zip
-addUp ln rn (ZR l z) = ZR (addDownR ln l) (addUpR rn z)
-addUp ln rn (ZL r z) = ZL (addDownL rn r) (addUpL ln z)
-addUp _ _ Top = Top
-
-addUpL :: Int -> Zip -> Zip
-addUpL _ Top = Top
-addUpL n (ZR l z) = ZR (addDownR n l) z
-addUpL n (ZL r z) = ZL r (addUpL n z)
-
-addUpR :: Int -> Zip -> Zip
-addUpR _ Top = Top
-addUpR n (ZR l z) = ZR l (addUpR n z)
-addUpR n (ZL r z) = ZL (addDownL n r) z
-
-addDownL :: Int -> X -> X
-addDownL n (l :+ r) = addDownL n l :+ r
-addDownL n (N m) = N (n+m)
-
-addDownR :: Int -> X -> X
-addDownR n (l :+ r) = l :+ addDownR n r
-addDownR n (N m) = N (n+m)
+split :: Tree Int -> Maybe (Tree Int)
+split (Leaf x) | x >= 10 = case quotRem x 2 of (q,r) -> Just (Leaf q :+: Leaf (q+r))
+split (l :+: r) = (:+: r) <$> split l <|> (l :+:) <$> split r
+split _ = Nothing
 
 -- | Compute the /magnitude/ of an expression
 --
@@ -117,23 +75,68 @@ addDownR n (N m) = N (n+m)
 --
 -- >>> magnitude (parse "[[1,2],[[3,4],5]]")
 -- 143
-magnitude :: X -> Int
-magnitude (N x) = x
-magnitude (l :+ r) = 3 * magnitude l + 2 * magnitude r
+magnitude :: Tree Int -> Int
+magnitude (Leaf x) = x
+magnitude (l :+: r) = 3 * magnitude l + 2 * magnitude r
+
+-- * Binary trees
+
+-- | A binary tree with data at the leaves
+data Tree a
+  = Tree a :+: Tree a -- ^ tuple
+  | Leaf a  -- ^ regular number
+  deriving Show
+
+-- * Tree zippers
+
+-- | Marks the side of a tree node constructor that
+-- we know the subtree of.
+data Side = L | R deriving (Eq, Show)
+
+-- | A hole in a binary tree. Rebuild the tree with 'fromZip'
+type Zip a = [(Side, Tree a)]
+
+-- | Rebuild a tree given a zipper and the value to put in the hole.
+fromZip :: Tree a -> Zip a -> Tree a
+fromZip = foldl \x -> \case
+  (L, l) -> l :+: x
+  (R, r) -> x :+: r
+
+-- | Apply the given function to the nearest parent
+-- sibling on the given side.
+appUp :: Side -> (Tree a -> Tree a) -> Zip a -> Zip a
+appUp L f ((L,l):zs) = (L, f l):zs
+appUp R f ((R,r):zs) = (R, f r):zs
+appUp h f (z    :zs) = z : appUp h f zs
+appUp _ _ []         = []
+
+-- | Apply a function to the left-most leaf
+appL :: (a -> a) -> Tree a -> Tree a
+appL f (l :+: r) = appL f l :+: r
+appL f (Leaf x) = Leaf (f x)
+
+-- | Apply a function to the rightmost leaf
+appR :: (a -> a) -> Tree a -> Tree a
+appR f (l :+: r) = l :+: appR f r
+appR f (Leaf x) = Leaf (f x)
 
 -- * Parsing
 
 -- | Parse an expression
 --
 -- >>> parse "[[[[0,9],2],3],4]"
--- (((N 0 :+ N 9) :+ N 2) :+ N 3) :+ N 4
-parse :: String -> X
-parse (readP_to_S pX -> [(x,_)]) = x
+-- (((N 0 :+: N 9) :+: N 2) :+: N 3) :+: N 4
+parse :: String -> Tree Int
+parse (readP_to_S (pTree pInt) -> [(x,_)]) = x
 parse _ = error "bad input"
 
+-- | Unsigned 'Int' parser
+pInt :: ReadP Int
+pInt = read <$> munch1 isDigit
+
 -- | ReadP expression parser
-pX :: ReadP X
-pX = pair +++ number
+pTree :: ReadP a -> ReadP (Tree a)
+pTree pLeaf = tuple <|> number
   where
-    pair = (:+) <$ char '[' <*> pX <* char ',' <*> pX <* char ']'
-    number = N . read <$> munch1 isDigit
+    tuple = (:+:) <$ char '[' <*> pTree pLeaf <* char ',' <*> pTree pLeaf <* char ']'
+    number = Leaf <$> pLeaf
