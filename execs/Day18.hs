@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, ViewPatterns #-}
 {-|
 Module      : Main
 Description : Day 18 solution
@@ -38,15 +38,6 @@ data X
   | N Int  -- ^ regular number
   deriving Show
 
--- | Expression zipper
-data Zip = ZL X Zip | ZR X Zip | Top  deriving Show
-
--- | Rebuild an expression given a zipper and the value to put in the hole.
-fromZip :: X -> Zip -> X
-fromZip r (ZL l z) = fromZip (l :+ r) z
-fromZip l (ZR r z) = fromZip (l :+ r) z
-fromZip l Top = l
-
 -- | Add two expressions and reduce them
 add :: X -> X -> X
 add x y = reduce (x :+ y)
@@ -63,7 +54,7 @@ explode = go (4::Int) Top
   where
     go 0 z (N l :+ N r) = Just (fromZip (N 0) (addUpL l (addUpR r z)))
     go 0 _ _ = Nothing
-    go d z (l :+ r) = go (d-1) (ZR r z) l <|> go (d-1) (ZL l z) r
+    go d z (l :+ r) = go (d-1) (ZL r z) l <|> go (d-1) (ZR l z) r
     go _ _ _ = Nothing
 
 -- | Replace the first number with value 10 or more with a pair
@@ -74,15 +65,33 @@ split (N x)
   | otherwise = Nothing
 split (l :+ r) = (:+ r) <$> split l <|> (l :+) <$> split r
 
+-- * Expression zippers
+
+-- | The type of a hole in an expression tree. Values of
+-- this type describe a location in an 'X' that's missing
+-- a subterm. This term can be replaced with 'fromZip' giving
+-- you the complete 'X' back.
+data Zip
+  = ZR X Zip -- ^ The hole is on the right side of a pair
+  | ZL X Zip -- ^ The hole is on the left side of a pair
+  | Top      -- ^ the topmost hole
+  deriving Show
+
+-- | Rebuild an expression given a zipper and the value to put in the hole.
+fromZip :: X -> Zip -> X
+fromZip r (ZR l z) = fromZip (l :+ r) z
+fromZip l (ZL r z) = fromZip (l :+ r) z
+fromZip l Top = l
+
 addUpL :: Int -> Zip -> Zip
 addUpL _ Top = Top
-addUpL n (ZL l z) = ZL (addDownR n l) z
-addUpL n (ZR r z) = ZR r (addUpL n z)
+addUpL n (ZR l z) = ZR (addDownR n l) z
+addUpL n (ZL r z) = ZL r (addUpL n z)
 
 addUpR :: Int -> Zip -> Zip
 addUpR _ Top = Top
-addUpR n (ZL l z) = ZL l (addUpR n z)
-addUpR n (ZR r z) = ZR (addDownL n r) z
+addUpR n (ZR l z) = ZR l (addUpR n z)
+addUpR n (ZL r z) = ZL (addDownL n r) z
 
 addDownL :: Int -> X -> X
 addDownL n (l :+ r) = addDownL n l :+ r
@@ -110,7 +119,8 @@ magnitude (l :+ r) = 3 * magnitude l + 2 * magnitude r
 -- >>> parse "[[[[0,9],2],3],4]"
 -- (((N 0 :+ N 9) :+ N 2) :+ N 3) :+ N 4
 parse :: String -> X
-parse = (\i -> let [(b,_)] = readP_to_S pList i in b)
+parse (readP_to_S pList -> [(x,_)]) = x
+parse _ = error "bad input"
 
 -- | ReadP expression parser
 pList :: ReadP X
