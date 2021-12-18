@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, ViewPatterns, LambdaCase #-}
+{-# Language BlockArguments, ImportQualifiedPost, ViewPatterns, LambdaCase #-}
 {-|
 Module      : Main
 Description : Day 18 solution
