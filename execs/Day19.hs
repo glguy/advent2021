@@ -12,6 +12,7 @@ Maintainer  : emertens@gmail.com
 module Main (main) where
 
 import Advent.Format (format)
+import Advent.Coord3 (Coord3(..), origin, manhattan, diff, add)
 import Control.Monad ((>=>))
 import Data.List (transpose)
 import Data.Map (Map)
@@ -25,25 +26,26 @@ import Data.Set qualified as Set
 -- 13243
 main :: IO ()
 main =
- do (i0,ps0):inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
-    let toP (x,y,z) = P x y z
-    let scanners = Map.fromList [(i, map toP xs) | (i, xs) <- inp]
+ do inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
+    let scanners = Map.fromList [(i, [C3 x y z | (x,y,z) <- ps]) | (i, ps) <- inp]
     
-    let (offsets, locations) =
-          unzip $ Map.elems $
-           assemble scanners
-                  (Map.singleton i0 (P 0 0 0, Set.fromList (map toP ps0)))
-                  [i0]
-
+    let (offsets, locations) = unzip (Map.elems (start scanners))
     print (Set.size (Set.unions locations))
-    print (maximum [manhattan p q | p <- offsets, q <- offsets])
+    print (maximum (manhattan <$> offsets <*> offsets))
+
+start :: Ord a => Map a [Coord3] -> Map a (Coord3, Set Coord3)
+start scanners =
+  case Map.minViewWithKey scanners of
+    Nothing -> Map.empty
+    Just ((k,v),scanners') ->
+      assemble scanners' (Map.singleton k (origin, Set.fromList v)) [k]
 
 assemble ::
   Ord a =>
-  Map a [P]        {- ^ uncorrelated scanner readings -} ->
-  Map a (P, Set P) {- ^ correlated scanner locations and readings -} ->
+  Map a [Coord3]        {- ^ uncorrelated scanner readings -} ->
+  Map a (Coord3, Set Coord3) {- ^ correlated scanner locations and readings -} ->
   [a]              {- ^ recently correlated scanners -} ->
-  Map a (P, Set P)
+  Map a (Coord3, Set Coord3)
 assemble remain known _ | Map.null remain = known
 assemble _ _ [] = error "bad input"
 assemble remain known (i:cs) =
@@ -52,7 +54,7 @@ assemble remain known (i:cs) =
   reference = snd (known Map.! i)
   new = Map.mapMaybe (match reference) remain
 
-match :: Set P -> [P] -> Maybe (P, Set P)
+match :: Set Coord3 -> [Coord3] -> Maybe (Coord3, Set Coord3)
 match xset ys = listToMaybe
  [(offset, yset')
    | yset <- Set.fromList <$> reorient ys
@@ -61,38 +63,25 @@ match xset ys = listToMaybe
    , 12 <= Set.size (Set.intersection xset yset')
  ]
 
--- * 3D points
+reorient :: [Coord3] -> [[Coord3]]
+reorient = transpose . map (faces >=> rotations)
 
-data P = P !Int !Int !Int deriving (Eq, Ord, Show)
-
-manhattan :: P -> P -> Int
-manhattan (P x1 y1 z1) (P x2 y2 z2) = abs (x1 - x2) + abs (y1 - y2) + abs (z1 - z2)
-
-diff :: P -> P -> P
-diff (P x y z) (P x' y' z') = P (x-x') (y-y') (z-z')
-
-add :: P -> P -> P
-add  (P x y z) (P x' y' z') = P (x+x') (y+y') (z+z')
-
-reorient :: [P] -> [[P]]
-reorient = transpose . map (rotations >=> faces)
-
-faces :: P -> [P]
-faces (P x y z) =
+faces :: Coord3 -> [Coord3]
+faces (C3 x y z) =
   [
-    P x y z,
-    P y (-x) z,
-    P (-x) (-y) z,
-    P (-y) x z,
-    P y z x,
-    P y (-z) (-x)
+    C3 x y z,
+    C3 y (-x) z,
+    C3 (-x) (-y) z,
+    C3 (-y) x z,
+    C3 y z x,
+    C3 y (-z) (-x)
   ]
 
-rotations :: P -> [P]
-rotations (P x y z) =
+rotations :: Coord3 -> [Coord3]
+rotations (C3 x y z) =
   [
-    P x y z,
-    P x (-z) y,
-    P x (-y) (-z),
-    P x z (-y)
+    C3 x y z,
+    C3 x (-z) y,
+    C3 x (-y) (-z),
+    C3 x z (-y)
   ]

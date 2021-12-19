@@ -32,6 +32,7 @@ library
     Advent
     Advent.Chinese
     Advent.Coord
+    Advent.Coord3
     Advent.Format
     Advent.Input
     Advent.Prelude
