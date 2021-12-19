@@ -8,6 +8,14 @@ Maintainer  : emertens@gmail.com
 
 <https://adventofcode.com/2021/day/19>
 
+To correlate all the scanner readings this program
+selects the first scanner to be "correct". All other
+scanners will be oriented relative to the first scanner.
+As each scanner's location is fixed it will be queued
+to be compared to all the uncorrelated scanner outputs.
+Scanning in this order ensures no pair of scanners is
+compared more than once.
+
 -}
 module Main (main) where
 
@@ -29,26 +37,31 @@ main =
  do inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
     let coord (x,y,z) = C3 x y z
     let scanners = map coord <$> Map.fromList inp
-    
+
     let (offsets, locations) = unzip (Map.elems (start scanners))
     print (Set.size (Set.unions locations))
     print (maximum (manhattan <$> offsets <*> offsets))
 
-start :: (Show a, Ord a) => Map a [Coord3] -> Map a (Coord3, Set Coord3)
+-- | Starts the scanner reading correlation algorithm.
+start ::
+  Ord a =>
+  Map a [Coord3] {- ^ uncorrelated scanner readings -} ->
+  Map a (Coord3, Set Coord3) {- ^ correlated scanner locations and readings -}
 start scanners =
   case Map.minViewWithKey scanners of
     Nothing -> Map.empty
     Just ((k,v),scanners') ->
       assemble scanners' (Map.singleton k (origin, Set.fromList v)) [k]
 
+-- | Worker for 'start'.
 assemble ::
-  (Show a, Ord a) =>
-  Map a [Coord3]        {- ^ uncorrelated scanner readings -} ->
+  Ord a =>
+  Map a [Coord3]             {- ^ uncorrelated scanner readings -} ->
   Map a (Coord3, Set Coord3) {- ^ correlated scanner locations and readings -} ->
-  [a]              {- ^ recently correlated scanners -} ->
-  Map a (Coord3, Set Coord3)
+  [a]                        {- ^ recently correlated scanners -} ->
+  Map a (Coord3, Set Coord3) {- ^ completed correlated locations and readings -}
 assemble remain known _ | Map.null remain = known
-assemble r _ [] = error "bad input"
+assemble _ _ [] = error "bad input"
 assemble remain known (i:cs) =
   assemble (Map.difference remain new) (Map.union known new) (Map.keys new ++ cs)
   where
@@ -59,7 +72,7 @@ match :: Set Coord3 -> [Coord3] -> Maybe (Coord3, Set Coord3)
 match xset ys = listToMaybe
  [(offset, yset')
    | yset <- Set.fromList <$> reorient ys
-   , offset <- [diff x y | x <- Set.toList xset, y <- Set.toList yset]    
+   , offset <- diff <$> Set.toList xset <*> Set.toList yset
    , let yset' = Set.mapMonotonic (add offset) yset
    , 12 <= Set.size (Set.intersection xset yset')
  ]
@@ -78,6 +91,7 @@ faces (C3 x y z) =
     C3 y (-z) (-x)
   ]
 
+-- | Return the 4 rotations of a point around the x-axis
 rotations :: Coord3 -> [Coord3]
 rotations (C3 x y z) =
   [
