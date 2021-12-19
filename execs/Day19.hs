@@ -27,13 +27,14 @@ import Data.Set qualified as Set
 main :: IO ()
 main =
  do inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
-    let scanners = Map.fromList [(i, [C3 x y z | (x,y,z) <- ps]) | (i, ps) <- inp]
+    let coord (x,y,z) = C3 x y z
+    let scanners = map coord <$> Map.fromList inp
     
     let (offsets, locations) = unzip (Map.elems (start scanners))
     print (Set.size (Set.unions locations))
     print (maximum (manhattan <$> offsets <*> offsets))
 
-start :: Ord a => Map a [Coord3] -> Map a (Coord3, Set Coord3)
+start :: (Show a, Ord a) => Map a [Coord3] -> Map a (Coord3, Set Coord3)
 start scanners =
   case Map.minViewWithKey scanners of
     Nothing -> Map.empty
@@ -41,13 +42,13 @@ start scanners =
       assemble scanners' (Map.singleton k (origin, Set.fromList v)) [k]
 
 assemble ::
-  Ord a =>
+  (Show a, Ord a) =>
   Map a [Coord3]        {- ^ uncorrelated scanner readings -} ->
   Map a (Coord3, Set Coord3) {- ^ correlated scanner locations and readings -} ->
   [a]              {- ^ recently correlated scanners -} ->
   Map a (Coord3, Set Coord3)
 assemble remain known _ | Map.null remain = known
-assemble _ _ [] = error "bad input"
+assemble r _ [] = error "bad input"
 assemble remain known (i:cs) =
   assemble (Map.difference remain new) (Map.union known new) (Map.keys new ++ cs)
   where
@@ -64,7 +65,7 @@ match xset ys = listToMaybe
  ]
 
 reorient :: [Coord3] -> [[Coord3]]
-reorient = transpose . map (faces >=> rotations)
+reorient = transpose . map (rotations >=> faces)
 
 faces :: Coord3 -> [Coord3]
 faces (C3 x y z) =
