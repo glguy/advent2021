@@ -21,73 +21,78 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Debug.Trace
 
-main :: IO ()
-main =
- do inp <- Map.fromList <$> [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
-    
-    let (answer, offsets) =
-           search (Map.delete 0 inp)
-                  (Map.singleton 0 (Set.fromList (inp Map.! 0)))
-                  (Map.singleton 0 (0,0,0))
-    print answer
-    print $ Set.size $ Set.unions $ Map.elems answer
-    print $ maximum [abs (x-x') + abs (y-y') + abs (z-z') | (x,y,z) <- Map.elems offsets, (x' ,y',z') <- Map.elems offsets]
+data P = P !Int !Int !Int deriving (Eq, Ord, Show)
 
-    -- print inp
+manhattan :: P -> P -> Int
+manhattan (P x1 y1 z1) (P x2 y2 z2) = abs (x1 - x2) + abs (y1 - y2) + abs (z1 - z2)
 
--- search :: Map Int [(Int,Int,Int)] -> Map Int (Set (Int,Int,Int)) -> _
---search seen [] = seen
+diff :: P -> P -> P
+diff (P x y z) (P x' y' z') = P (x-x') (y-y') (z-z')
 
+add :: P -> P -> P
+add  (P x y z) (P x' y' z') = P (x+x') (y+y') (z+z')
 
-
-search remain known offset
- | Map.null remain = (known, offset)
- | otherwise =
-  case zs of
-    
-    (i,j, (o,m)):_ -> traceShow j $
-       search (Map.delete j remain) (Map.insert j m known )
-        (Map.insert j (o) offset)
-
-  where
-  zs = [ (i,j, y2)
-          | (i, region1) <- Map.toList known
-          , (j, region2) <- Map.toList remain
-          , region2' <- redirect region2
-          , Just y2 <- [match region1 region2']
-      ]
-
-redirect :: [(Int,Int,Int)] -> [[(Int,Int,Int)]]
+redirect :: [P] -> [[P]]
 redirect = transpose . map (spins >=> orientations)
 
-orientations :: (Int,Int,Int) -> [(Int,Int,Int)]
-orientations (x,y,z) =
+orientations :: P -> [P]
+orientations (P x y z) =
   [
-    (x,y,z),
-    (y,-x,z),
-    (-x,-y,z),
-    (-y,x,z),
-    (y,z,x),
-    (y,-z,-x)
+    P x y z,
+    P y (-x) z,
+    P (-x) (-y) z,
+    P (-y) x z,
+    P y z x,
+    P y (-z) (-x)
   ]
 
-spins :: (Int,Int,Int) -> [(Int,Int,Int)]
-spins (x,y,z) =
+spins :: P -> [P]
+spins (P x y z) =
   [
-    (x,y,z),
-    (x,-z,y),
-    (x,-y,-z),
-    (x,z,-y)
+    P x y z,
+    P x (-z) y,
+    P x (-y) (-z),
+    P x z (-y)
   ]
 
-diff (x,y,z) (x',y',z') = (x-x',y-y',z-z')
-add (x,y,z) (x',y',z') = (x+x',y+y',z+z')
+main :: IO ()
+main =
+ do (i0,ps0):inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
+    let toP (x,y,z) = P x y z
+    let scanners = Map.fromList [(i, map toP xs) | (i, xs) <- inp]
+    
+    let answer =
+           search scanners
+                  (Map.singleton i0 (P 0 0 0, Set.fromList (map toP ps0)))
+                  [0]
+    print $ Set.size $ Set.unions $ map snd $ Map.elems answer
+    print $ maximum [manhattan p q | p <- map fst $ Map.elems answer, q <- map fst $ Map.elems answer]
 
--- match ::  Set (Int,Int,Int) ->  [(Int,Int,Int)] -> Maybe (Set (Int,Int,Int))
-match xs ys = listToMaybe
- do offset <- [diff x y | x <- Set.toList xs, y <- ys]
-    let ys' = Set.fromList (map (add offset) ys)
-    let both = Set.intersection xs ys'
-    if 12 <= Set.size both
-      then [(offset, ys')]
-      else []
+
+search :: Ord a => Map a [P] -> Map a (P, Set P) -> [a] -> Map a (P, Set P)
+search remain known _
+ | Map.null remain = known
+search remain known (i:cs) =
+  case
+    foldl (\(r,k,c) (j,(o,m)) ->
+        (Map.delete j r,
+        Map.insert j (o,m) k,
+        j:c)
+      ) (remain, known, cs) zs of
+    (r,k,c) -> search r k c
+  where
+  region1 = snd (known Map.! i)
+  zs = [ (j, align)
+          | (j, region2) <- Map.toList remain
+          , align <- match region1 region2
+      ]
+
+match :: Set P -> [P] -> [(P, Set P)]
+match xs ys = take 1
+ [(offset, yset')
+   | ys1 <- redirect ys
+   , let yset = Set.fromList ys1
+   , offset <- [diff x y | x <- Set.toList xs, y <- ys1]    
+   , let yset' = Set.mapMonotonic (add offset) yset
+   , 12 <= Set.size (Set.intersection xs yset')
+ ]
