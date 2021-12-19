@@ -12,14 +12,48 @@ Maintainer  : emertens@gmail.com
 module Main (main) where
 
 import Advent.Format (format)
-import Control.Monad
-import Data.List
+import Control.Monad ((>=>))
+import Data.List (transpose)
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Maybe
+import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
-import Debug.Trace
+
+main :: IO ()
+main =
+ do (i0,ps0):inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
+    let toP (x,y,z) = P x y z
+    let scanners = Map.fromList [(i, map toP xs) | (i, xs) <- inp]
+    
+    let (offsets, locations) =
+          unzip $ Map.elems $
+           search scanners
+                  (Map.singleton i0 (P 0 0 0, Set.fromList (map toP ps0)))
+                  [i0]
+
+    print (Set.size (Set.unions locations))
+    print (maximum [manhattan p q | p <- offsets, q <- offsets])
+
+search :: Ord a => Map a [P] -> Map a (P, Set P) -> [a] -> Map a (P, Set P)
+search remain known _ | Map.null remain = known
+search _ _ [] = error "bad input"
+search remain known (i:cs) =
+  search (Map.difference remain zs) (Map.union known zs) (Map.keys zs ++ cs)
+  where
+  reference = snd (known Map.! i)
+  zs = Map.mapMaybe (match reference) remain
+
+match :: Set P -> [P] -> Maybe (P, Set P)
+match xset ys = listToMaybe
+ [(offset, yset')
+   | yset <- Set.fromList <$> reorient ys
+   , offset <- [diff x y | x <- Set.toList xset, y <- Set.toList yset]    
+   , let yset' = Set.mapMonotonic (add offset) yset
+   , 12 <= Set.size (Set.intersection xset yset')
+ ]
+
+-- * 3D points
 
 data P = P !Int !Int !Int deriving (Eq, Ord, Show)
 
@@ -32,11 +66,11 @@ diff (P x y z) (P x' y' z') = P (x-x') (y-y') (z-z')
 add :: P -> P -> P
 add  (P x y z) (P x' y' z') = P (x+x') (y+y') (z+z')
 
-redirect :: [P] -> [[P]]
-redirect = transpose . map (spins >=> orientations)
+reorient :: [P] -> [[P]]
+reorient = transpose . map (rotations >=> faces)
 
-orientations :: P -> [P]
-orientations (P x y z) =
+faces :: P -> [P]
+faces (P x y z) =
   [
     P x y z,
     P y (-x) z,
@@ -46,53 +80,11 @@ orientations (P x y z) =
     P y (-z) (-x)
   ]
 
-spins :: P -> [P]
-spins (P x y z) =
+rotations :: P -> [P]
+rotations (P x y z) =
   [
     P x y z,
     P x (-z) y,
     P x (-y) (-z),
     P x z (-y)
   ]
-
-main :: IO ()
-main =
- do (i0,ps0):inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
-    let toP (x,y,z) = P x y z
-    let scanners = Map.fromList [(i, map toP xs) | (i, xs) <- inp]
-    
-    let answer =
-           search scanners
-                  (Map.singleton i0 (P 0 0 0, Set.fromList (map toP ps0)))
-                  [0]
-    print $ Set.size $ Set.unions $ map snd $ Map.elems answer
-    print $ maximum [manhattan p q | p <- map fst $ Map.elems answer, q <- map fst $ Map.elems answer]
-
-
-search :: Ord a => Map a [P] -> Map a (P, Set P) -> [a] -> Map a (P, Set P)
-search remain known _
- | Map.null remain = known
-search remain known (i:cs) =
-  case
-    foldl (\(r,k,c) (j,(o,m)) ->
-        (Map.delete j r,
-        Map.insert j (o,m) k,
-        j:c)
-      ) (remain, known, cs) zs of
-    (r,k,c) -> search r k c
-  where
-  region1 = snd (known Map.! i)
-  zs = [ (j, align)
-          | (j, region2) <- Map.toList remain
-          , align <- match region1 region2
-      ]
-
-match :: Set P -> [P] -> [(P, Set P)]
-match xs ys = take 1
- [(offset, yset')
-   | ys1 <- redirect ys
-   , let yset = Set.fromList ys1
-   , offset <- [diff x y | x <- Set.toList xs, y <- ys1]    
-   , let yset' = Set.mapMonotonic (add offset) yset
-   , 12 <= Set.size (Set.intersection xs yset')
- ]
