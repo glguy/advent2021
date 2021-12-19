@@ -20,6 +20,9 @@ import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
 
+-- | >>> :main
+-- 457
+-- 13243
 main :: IO ()
 main =
  do (i0,ps0):inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
@@ -28,21 +31,26 @@ main =
     
     let (offsets, locations) =
           unzip $ Map.elems $
-           search scanners
+           assemble scanners
                   (Map.singleton i0 (P 0 0 0, Set.fromList (map toP ps0)))
                   [i0]
 
     print (Set.size (Set.unions locations))
     print (maximum [manhattan p q | p <- offsets, q <- offsets])
 
-search :: Ord a => Map a [P] -> Map a (P, Set P) -> [a] -> Map a (P, Set P)
-search remain known _ | Map.null remain = known
-search _ _ [] = error "bad input"
-search remain known (i:cs) =
-  search (Map.difference remain zs) (Map.union known zs) (Map.keys zs ++ cs)
+assemble ::
+  Ord a =>
+  Map a [P]        {- ^ uncorrelated scanner readings -} ->
+  Map a (P, Set P) {- ^ correlated scanner locations and readings -} ->
+  [a]              {- ^ recently correlated scanners -} ->
+  Map a (P, Set P)
+assemble remain known _ | Map.null remain = known
+assemble _ _ [] = error "bad input"
+assemble remain known (i:cs) =
+  assemble (Map.difference remain new) (Map.union known new) (Map.keys new ++ cs)
   where
   reference = snd (known Map.! i)
-  zs = Map.mapMaybe (match reference) remain
+  new = Map.mapMaybe (match reference) remain
 
 match :: Set P -> [P] -> Maybe (P, Set P)
 match xset ys = listToMaybe
