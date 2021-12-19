@@ -23,11 +23,10 @@ import Advent.Format (format)
 import Advent.Coord3 (Coord3(..), origin, manhattan, diff, add)
 import Control.Monad ((>=>))
 import Data.List (transpose)
-import Data.Map (Map)
-import Data.Map qualified as Map
 import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
+import Data.Either (partitionEithers)
 
 -- | >>> :main
 -- 457
@@ -36,37 +35,32 @@ main :: IO ()
 main =
  do inp <- [format|19 (--- scanner %u ---%n(%d,%d,%d%n)*)&%n|]
     let coord (x,y,z) = C3 x y z
-    let scanners = map coord <$> Map.fromList inp
+    let scanners = [map coord ps | (_,ps) <- inp]
 
-    let (offsets, locations) = unzip (Map.elems (start scanners))
+    let (offsets, locations) = unzip (start scanners)
     print (Set.size (Set.unions locations))
     print (maximum (manhattan <$> offsets <*> offsets))
 
 -- | Starts the scanner reading correlation algorithm.
 start ::
-  Ord a =>
-  Map a [Coord3] {- ^ uncorrelated scanner readings -} ->
-  Map a (Coord3, Set Coord3) {- ^ correlated scanner locations and readings -}
-start scanners =
-  case Map.minViewWithKey scanners of
-    Nothing -> Map.empty
-    Just ((k,v),scanners') ->
-      assemble scanners' (Map.singleton k (origin, Set.fromList v)) [k]
+  [[Coord3]] {- ^ uncorrelated scanner readings -} ->
+  [(Coord3, Set Coord3)] {- ^ correlated scanner locations and readings -}
+start (x:xs) = assemble xs [(origin, Set.fromList x)]
+start [] = []
 
 -- | Worker for 'start'.
 assemble ::
-  Ord a =>
-  Map a [Coord3]             {- ^ uncorrelated scanner readings -} ->
-  Map a (Coord3, Set Coord3) {- ^ correlated scanner locations and readings -} ->
-  [a]                        {- ^ recently correlated scanners -} ->
-  Map a (Coord3, Set Coord3) {- ^ completed correlated locations and readings -}
-assemble remain known _ | Map.null remain = known
-assemble _ _ [] = error "bad input"
-assemble remain known (i:cs) =
-  assemble (Map.difference remain new) (Map.union known new) (Map.keys new ++ cs)
+  [[Coord3]]             {- ^ uncorrelated scanner readings -} ->
+  [(Coord3, Set Coord3)] {- ^ recently correlated scanners -} ->
+  [(Coord3, Set Coord3)] {- ^ completed correlated locations and readings -}
+assemble _ [] = []
+assemble remains ((offset,reference):cs) =
+  (offset,reference) : assemble remain' (new ++ cs)
   where
-  reference = snd (known Map.! i)
-  new = Map.mapMaybe (match reference) remain
+  (new,remain') = partitionEithers
+    [ maybe (Right remain) Left (match reference remain)
+      | remain <- remains
+    ]
 
 match :: Set Coord3 -> [Coord3] -> Maybe (Coord3, Set Coord3)
 match xset ys = listToMaybe
