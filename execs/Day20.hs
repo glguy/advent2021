@@ -15,7 +15,7 @@ so that we can represent updates to infinite space.
 -}
 module Main (main) where
 
-import Advent (format, fromDigits, times)
+import Advent (getInputLines, fromDigits, times)
 import Advent.Coord(Coord(..), coordLines)
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
@@ -32,7 +32,7 @@ data Picture = Picture { _background :: !Bool, exceptions :: !(Set Coord) }
 -- 16112
 main :: IO ()
 main =
- do (algStr, imgStrs) <- [format|20 %s%n%n(%s%n)*|]
+ do algStr : "" : imgStrs <- getInputLines 20
     let alg = IntSet.fromList ('#' `elemIndices` algStr)
     let pic = Picture False (Set.fromList [c | (c, '#') <- coordLines imgStrs])
 
