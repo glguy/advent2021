@@ -28,8 +28,6 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Map qualified as Map
 import Data.Either (partitionEithers)
-import Data.Ord
-import Debug.Trace
 
 -- | >>> :main
 -- 457
