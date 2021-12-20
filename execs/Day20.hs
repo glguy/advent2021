@@ -19,6 +19,7 @@ import Advent (format, fromDigits, times)
 import Advent.Coord(Coord(..), coordLines)
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
+import Data.List (elemIndices)
 import Data.Set (Set)
 import Data.Set qualified as Set
 
@@ -32,7 +33,7 @@ data Picture = Picture { _background :: !Bool, exceptions :: !(Set Coord) }
 main :: IO ()
 main =
  do (algStr, imgStrs) <- [format|20 %s%n%n(%s%n)*|]
-    let alg = IntSet.fromList [i | (i,'#') <- zip [0..] algStr]
+    let alg = IntSet.fromList ('#' `elemIndices` algStr)
     let pic = Picture False (Set.fromList [c | (c, '#') <- coordLines imgStrs])
 
     print (length (exceptions (times  2 (step alg) pic)))
