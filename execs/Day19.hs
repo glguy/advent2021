@@ -22,7 +22,7 @@ module Main (main) where
 import Advent (format, counts)
 import Advent.Coord3 (Coord3(..), origin, manhattan, diff, add)
 import Control.Monad ((>=>))
-import Data.List (transpose, sortBy)
+import Data.List (transpose)
 import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
