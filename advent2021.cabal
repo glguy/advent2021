@@ -163,3 +163,8 @@ executable Day19
   import:              day
   main-is:             Day19.hs
   build-depends:       containers
+
+executable Day20
+  import:              day
+  main-is:             Day20.hs
+  build-depends:       containers
