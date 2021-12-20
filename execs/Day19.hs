@@ -55,13 +55,12 @@ assemble ::
   [(Coord3, Set Coord3)] {- ^ recently correlated scanners -} ->
   [(Coord3, Set Coord3)] {- ^ completed correlated locations and readings -}
 assemble _ [] = []
-assemble remains ((offset,reference):cs) =
-  (offset,reference) : assemble remain' (new ++ cs)
+assemble remains (c@(offset,reference):cs) = c : assemble remain' (new ++ cs)
   where
-  (new,remain') = partitionEithers
-    [ maybe (Right remain) Left (match reference remain)
-      | remain <- remains
-    ]
+    (new,remain') = partitionEithers
+      [ maybe (Right remain) Left (match reference remain)
+        | remain <- remains
+      ]
 
 match :: Set Coord3 -> [Coord3] -> Maybe (Coord3, Set Coord3)
 match xset ys = listToMaybe
