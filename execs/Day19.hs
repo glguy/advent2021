@@ -19,14 +19,17 @@ compared more than once.
 -}
 module Main (main) where
 
-import Advent.Format (format)
+import Advent (format, counts)
 import Advent.Coord3 (Coord3(..), origin, manhattan, diff, add)
 import Control.Monad ((>=>))
-import Data.List (transpose)
+import Data.List (transpose, sortBy)
 import Data.Maybe (listToMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
+import Data.Map qualified as Map
 import Data.Either (partitionEithers)
+import Data.Ord
+import Debug.Trace
 
 -- | >>> :main
 -- 457
@@ -66,10 +69,15 @@ match :: Set Coord3 -> [Coord3] -> Maybe (Coord3, Set Coord3)
 match xset ys = listToMaybe
  [(offset, yset')
    | yset <- Set.fromList <$> reorient ys
-   , offset <- diff <$> Set.toList xset <*> Set.toList yset
+   , offset <- prefilter (diff <$> Set.toList xset <*> Set.toList yset)
    , let yset' = Set.mapMonotonic (add offset) yset
    , 12 <= Set.size (Set.intersection xset yset')
  ]
+
+-- | Only bother checking offsets that occur enough times that it's possible
+-- to have an overlap
+prefilter :: [Coord3] -> [Coord3]
+prefilter = Map.keys . Map.filter (>= 12) . counts
 
 reorient :: [Coord3] -> [[Coord3]]
 reorient = transpose . map (rotations >=> faces)
