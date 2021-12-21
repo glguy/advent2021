@@ -26,7 +26,7 @@ main :: IO ()
 main =
  do (p1,p2) <- [format|21 Player 1 starting position: %u%nPlayer 2 starting position: %u%n|]
     print (part1 0 p1 p2 0 0)
-    print $ maximum $ map snd $ runM (part2 p1 p2 0 0)
+    print (maximum (snd <$> runPaths (part2 p1 p2 0 0)))
 
 -- | Compute the @die rolls * losing score@ once one player
 -- wins with 1000 points.
@@ -73,8 +73,9 @@ threeRolls = gather (sum <$> replicateM 3 (pure 1 <|> pure 2 <|> pure 3))
 newtype Paths a = Paths (WriterT (Product Int) [] a)
   deriving (Functor, Applicative, Monad, Alternative)
 
-runM :: Paths a -> [(a, Int)]
-runM (Paths m) = coerce (runWriterT m)
+-- | Return all values and counts from all the paths.
+runPaths :: Paths a -> [(a, Int)]
+runPaths (Paths m) = coerce (runWriterT m)
 
 -- | Combine the counts of equal outputs to reduce braching factor.
 gather :: Ord a => Paths a -> Paths a
