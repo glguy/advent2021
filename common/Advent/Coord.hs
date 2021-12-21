@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost, DeriveGeneric #-}
+{-# Language ImportQualifiedPost, DeriveGeneric, TypeFamilies, TypeOperators, BlockArguments #-}
 {-|
 Module      : Advent.Coord
 Description : Row-major coordinates
@@ -23,6 +23,7 @@ module Advent.Coord where
 import Data.Foldable (toList)
 import Data.Map (Map)
 import Data.Map qualified as Map
+import Data.MemoTrie
 import GHC.Generics (Generic)
 import GHC.Ix (Ix(unsafeIndex, range, index, inRange, unsafeRangeSize), indexError)
 
@@ -186,7 +187,7 @@ mapCoord f (C y x) = C (f y) (f x)
 zipCoord :: (Int -> Int -> Int) -> Coord -> Coord -> Coord
 zipCoord f (C y1 x1) (C y2 x2) = C (f y1 y2) (f x1 x2)
 
--- | Treat coordinates as 2-d vectors
+-- | Paisewise treatment of coordinates
 instance Num Coord where
   (+) = zipCoord (+)
   {-# INLINE (+) #-}
@@ -202,3 +203,9 @@ instance Num Coord where
   {-# INLINE signum #-}
   fromInteger = (\i -> C i i) . fromInteger
   {-# INLINE fromInteger #-}
+
+instance HasTrie Coord where
+  newtype Coord :->: a = CT (Int :->: Int :->: a)
+  trie f = CT (trie \y -> trie \x -> f (C y x))
+  CT t `untrie` C y x = t `untrie` y `untrie` x
+  enumerate (CT t) = [(C y x, a) | (y, xs) <- enumerate t, (x, a) <- enumerate xs]
