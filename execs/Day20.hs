@@ -34,10 +34,10 @@ main :: IO ()
 main =
  do algStr : "" : imgStrs <- getInputLines 20
     let alg = IntSet.fromList ('#' `elemIndices` algStr)
-    let pic = Picture False (Set.fromList [c | (c, '#') <- coordLines imgStrs])
-
-    print (length (exceptions (times  2 (step alg) pic)))
-    print (length (exceptions (times 50 (step alg) pic)))
+        pic = Picture False (Set.fromList [c | (c, '#') <- coordLines imgStrs])
+        steps = iterate (step alg) pic
+    print (length (exceptions (steps !!  2)))
+    print (length (exceptions (steps !! 50)))
 
 -- | Apply the given image enhancement algorithm to a picture
 step :: IntSet -> Picture -> Picture
