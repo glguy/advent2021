@@ -217,11 +217,3 @@ power (#) one n
       | 1 == i    = one
       | even i    = double (go (i `quot` 2))
       | otherwise = double (go (i `quot` 2)) # one
-
--- | Memoize a quaternary function on successive arguments.
--- Take care to exploit any partial evaluation.
-memo4 ::
-  (HasTrie a, HasTrie b, HasTrie c, HasTrie d) =>
-  (a -> b -> c -> d -> e) ->
-  (a -> b -> c -> d -> e)
-memo4 = mup memo3

@@ -11,7 +11,8 @@ Maintainer  : emertens@gmail.com
 -}
 module Main (main) where
 
-import Advent (format, memo4)
+import Advent.Format (format)
+import Advent.Memo (memo4)
 import Control.Applicative (Alternative((<|>)))
 import Control.Monad (replicateM)
 import Control.Monad.Trans.Writer.CPS (runWriterT, writerT, WriterT)
