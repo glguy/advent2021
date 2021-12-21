@@ -35,8 +35,9 @@ library
     Advent.Coord3
     Advent.Format
     Advent.Input
-    Advent.Prelude
+    Advent.Memo
     Advent.PQueue
+    Advent.Prelude
     Advent.Queue
     Advent.Search
     Advent.SmallSet

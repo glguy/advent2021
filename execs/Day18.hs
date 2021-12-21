@@ -125,7 +125,7 @@ appR f (Leaf x) = Leaf (f x)
 -- | Parse an expression
 --
 -- >>> parse "[[[[0,9],2],3],4]"
--- (((N 0 :+: N 9) :+: N 2) :+: N 3) :+: N 4
+-- (((Leaf 0 :+: Leaf 9) :+: Leaf 2) :+: Leaf 3) :+: Leaf 4
 parse :: String -> Tree Int
 parse (readP_to_S (pTree pInt) -> [(x,_)]) = x
 parse _ = error "bad input"
