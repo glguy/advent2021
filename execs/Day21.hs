@@ -12,12 +12,12 @@ Maintainer  : emertens@gmail.com
 module Main (main) where
 
 import Advent (format, memo4)
-import Control.Monad (replicateM)
-import Data.Map qualified as Map
 import Control.Applicative (Alternative((<|>)))
+import Control.Monad (replicateM)
 import Control.Monad.Trans.Writer.CPS (runWriterT, writerT, WriterT)
-import Data.Monoid (Product(Product))
 import Data.Coerce (coerce)
+import Data.Map.Strict qualified as Map
+import Data.Monoid (Product(Product))
 
 -- | >>> :main
 -- 428736

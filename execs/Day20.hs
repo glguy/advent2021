@@ -1,4 +1,4 @@
-{-# Language LambdaCase, BlockArguments, ImportQualifiedPost, NumericUnderscores, BinaryLiterals, QuasiQuotes #-}
+{-# Language BlockArguments, ImportQualifiedPost, NumericUnderscores, BinaryLiterals #-}
 {-|
 Module      : Main
 Description : Day 20 solution
