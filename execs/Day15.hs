@@ -23,7 +23,7 @@ search on much larger maps.
 module Main (main) where
 
 import Advent (arrIx, getInputArray)
-import Advent.Coord (Coord(..), cardinal, origin, addCoord)
+import Advent.Coord (Coord(..), cardinal, origin)
 import Advent.Search (AStep(..), astar)
 import Data.Array.Unboxed ((!), amap, IArray(bounds), UArray)
 import Data.Char (digitToInt)
@@ -59,7 +59,7 @@ extendCave m = end `seq` (end, f)
     (C 0 0, end0@(C hiy hix)) = bounds m
     wy  = 1+hiy
     wx  = 1+hix
-    end = addCoord (C (4*wy) (4*wx)) end0
+    end = C (4*wy) (4*wx) + end0
     f (C y x) =
       case (divMod y wy, divMod x wx) of
         ((ty, y'),(tx,x'))
