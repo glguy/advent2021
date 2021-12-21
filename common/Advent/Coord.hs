@@ -179,3 +179,26 @@ drawCoords coords = drawPicture (Map.fromList [(c,'█') | c <- toList coords])
 -- its position.
 coordLines :: [String] -> [(Coord, Char)]
 coordLines rows = [(C y x, z) | (y,row) <- zip [0..] rows, (x,z) <- zip [0..] row]
+
+mapCoord :: (Int -> Int) -> Coord -> Coord
+mapCoord f (C y x) = C (f y) (f x)
+
+zipCoord :: (Int -> Int -> Int) -> Coord -> Coord -> Coord
+zipCoord f (C y1 x1) (C y2 x2) = C (f y1 y2) (f x1 x2)
+
+-- | Treat coordinates as 2-d vectors
+instance Num Coord where
+  (+) = zipCoord (+)
+  {-# INLINE (+) #-}
+  (-) = zipCoord (-)
+  {-# INLINE (-) #-}
+  (*) = zipCoord (*)
+  {-# INLINE (*) #-}
+  negate = mapCoord negate
+  {-# INLINE negate #-}
+  abs = mapCoord abs
+  {-# INLINE abs #-}
+  signum = mapCoord signum
+  {-# INLINE signum #-}
+  fromInteger = (\i -> C i i) . fromInteger
+  {-# INLINE fromInteger #-}
