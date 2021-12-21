@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes, GeneralisedNewtypeDeriving #-}
 {-|
 Module      : Main
 Description : Day 21 solution
@@ -11,10 +11,13 @@ Maintainer  : emertens@gmail.com
 -}
 module Main (main) where
 
-import Advent (format, counts, memo4)
-import Advent.Coord (Coord(..), invert, scaleCoord)
+import Advent (format, memo4)
 import Control.Monad (replicateM)
 import Data.Map qualified as Map
+import Control.Applicative (Alternative((<|>)))
+import Control.Monad.Trans.Writer.CPS (runWriterT, writerT, WriterT)
+import Data.Monoid (Product(Product))
+import Data.Coerce (coerce)
 
 -- | >>> :main
 -- 428736
@@ -23,7 +26,7 @@ main :: IO ()
 main =
  do (p1,p2) <- [format|21 Player 1 starting position: %u%nPlayer 2 starting position: %u%n|]
     print (part1 0 p1 p2 0 0)
-    print (let C y x = part2 p1 p2 0 0 in max y x)
+    print $ maximum $ map snd $ runM (part2 p1 p2 0 0)
 
 -- | Compute the @die rolls * losing score@ once one player
 -- wins with 1000 points.
@@ -49,20 +52,36 @@ part2 ::
   Int   {- ^ player 2 location -} ->
   Int   {- ^ player 1 score    -} ->
   Int   {- ^ player 2 score    -} ->
-  Coord {- ^ vector of p1 wins and p2 wins -}
+  Paths Bool {- ^ player 1 won -}
 part2 = memo4 \p1 p2 p1s p2s ->
-    sum
-    [ if p1s' >= 21
-        then C n 0
-        else scaleCoord n (invert (part2 p2 p1' p2s p1s'))
-      | (move, n) <- somerolls
-      , let p1' = wrap (p1 + move) 10
-      , let p1s' = p1s + p1'
-    ]
-  where
-    somerolls = Map.toList (counts (sum <$> replicateM 3 [1,2,3]))
+  gather
+   do move <- threeRolls 
+      let p1' = wrap (p1 + move) 10
+      let p1s' = p1s + p1'
+      if p1s' >= 21
+        then pure True
+        else not <$> part2 p2 p1' p2s p1s'
 
--- * Helpers
+-- | Sum of 3d3.
+threeRolls :: Paths Int
+threeRolls = gather (sum <$> replicateM 3 (pure 1 <|> pure 2 <|> pure 3))
+
+-- * Counting Nondeterminism Computations
+
+-- | Nondeterministic computation that can consolidate
+-- paths returning the same value.
+newtype Paths a = Paths (WriterT (Product Int) [] a)
+  deriving (Functor, Applicative, Monad, Alternative)
+
+runM :: Paths a -> [(a, Int)]
+runM (Paths m) = coerce (runWriterT m)
+
+-- | Combine the counts of equal outputs to reduce braching factor.
+gather :: Ord a => Paths a -> Paths a
+gather (Paths xs) =
+  Paths (writerT (Map.toList (Map.fromListWith (+) (runWriterT xs))))
+
+-- * Modular arithmetic
 
 -- | Wrap number between @1@ and an inclusive upper bound
 wrap :: Int {- ^ value -} -> Int {- ^ bound -} -> Int
