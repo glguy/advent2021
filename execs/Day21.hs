@@ -11,11 +11,10 @@ Maintainer  : emertens@gmail.com
 -}
 module Main (main) where
 
-import Advent (format, counts)
+import Advent (format, counts, memo4)
 import Advent.Coord (Coord(..), invert, scaleCoord)
 import Control.Monad (replicateM)
 import Data.Map qualified as Map
-import Data.MemoTrie (HasTrie, memo3, mup)
 
 -- | >>> :main
 -- 428736
@@ -39,9 +38,9 @@ part1 turns p1 p2 p1s p2s
   | p1s' >= 1000 = 3 * turns' * p2s
   | otherwise    = part1 turns' p2 p1' p2s p1s'
   where
-        turns' = turns + 1
-        p1'    = wrap (p1 + 6 - turns) 10
-        p1s'   = p1s + p1'
+    turns' = turns + 1
+    p1'    = wrap (p1 + 6 - turns) 10
+    p1s'   = p1s + p1'
 
 -- | Compute the possible ways a the players can win while playing with
 -- a 3-sided dice given some starting conditions.
@@ -68,11 +67,3 @@ part2 = memo4 \p1 p2 p1s p2s ->
 -- | Wrap number between @1@ and an inclusive upper bound
 wrap :: Int {- ^ value -} -> Int {- ^ bound -} -> Int
 wrap x n = (x - 1) `mod` n + 1
-
--- | Memoize a quaternary function on successive arguments.
--- Take care to exploit any partial evaluation.
-memo4 ::
-  (HasTrie a, HasTrie b, HasTrie c, HasTrie d) =>
-  (a -> b -> c -> d -> e) ->
-  (a -> b -> c -> d -> e)
-memo4 = mup memo3

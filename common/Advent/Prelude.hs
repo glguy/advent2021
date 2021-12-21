@@ -14,12 +14,13 @@ module Advent.Prelude where
 
 import Data.Array.Unboxed qualified as A
 import Data.Foldable (toList)
-import Data.List (foldl', inits, sortBy, tails, mapAccumL)
-import Data.Ord (comparing)
-import Data.Map (Map)
-import Data.Map.Strict qualified as SMap
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
+import Data.List (foldl', inits, sortBy, tails, mapAccumL)
+import Data.Map (Map)
+import Data.Map.Strict qualified as SMap
+import Data.MemoTrie (HasTrie, memo3, mup)
+import Data.Ord (comparing)
 import Data.Set (Set)
 import Data.Set qualified as Set
 
@@ -75,6 +76,18 @@ minimumMaybe :: Ord a => [a] -> Maybe a
 minimumMaybe xs
   | null xs   = Nothing
   | otherwise = Just $! minimum xs
+
+
+-- | Compute the maximum element of a list or return Nothing if it is empty.
+--
+-- >>> maximumMaybe []
+-- Nothing
+-- >>> maximumMaybe [2,1,3]
+-- Just 3
+maximumMaybe :: Ord a => [a] -> Maybe a
+maximumMaybe xs
+  | null xs   = Nothing
+  | otherwise = Just $! maximum xs
 
 -- | Compute the number of occurrences of the elements in a given list.
 --
@@ -204,3 +217,11 @@ power (#) one n
       | 1 == i    = one
       | even i    = double (go (i `quot` 2))
       | otherwise = double (go (i `quot` 2)) # one
+
+-- | Memoize a quaternary function on successive arguments.
+-- Take care to exploit any partial evaluation.
+memo4 ::
+  (HasTrie a, HasTrie b, HasTrie c, HasTrie d) =>
+  (a -> b -> c -> d -> e) ->
+  (a -> b -> c -> d -> e)
+memo4 = mup memo3
