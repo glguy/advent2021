@@ -50,7 +50,7 @@ applyCommand ::
   [Box n]    {- ^ pre-lit boxes  -} ->
   (C, Box n) {- ^ command        -} ->
   [Box n]    {- ^ post-lit boxes -}
-applyCommand ons (c, b) = [b | Con == c] ++ concatMap (subbox b) ons
+applyCommand ons (c, b) = [b | Con == c] ++ concatMap (subBox b) ons
 
 -- * Segments
 
@@ -94,11 +94,11 @@ intersectBox (x :× xs) (y :× ys) = (:×) <$> intersectSeg x y <*> intersectBox
 
 -- | Subtract the second box from the first box returning a list of boxes
 -- that cover all the remaining area.
-subbox ::
-  Box n ->
-  Box n {- ^ remove -} ->
+subBox ::
+  Box n {- ^ remove this -} ->
+  Box n {- ^ from this -} ->
   [Box n]
-subbox b1 b2
+subBox b1 b2
   | isNothing (intersectBox b1 b2) = [b2]
   | otherwise = [b | (b, All False) <- runWriterT (go b1 b2)]
   where
