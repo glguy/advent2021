@@ -16,10 +16,8 @@ unique to the current command will affect the final output.
 module Main (main) where
 
 import Advent.Format (format)
-import Control.Monad (foldM)
 import Control.Monad.Trans.Writer.CPS (runWriterT, writerT, WriterT)
 import Data.Kind (Type)
-import Data.List (tails)
 import Data.Maybe (isNothing, mapMaybe)
 import Data.Monoid (All(All))
 
@@ -48,7 +46,14 @@ main =
 -- Each @on@ command has all future boxes subtracted from it before
 -- being included in the sum.
 solve :: [(C, Box n)] -> Int
-solve xs = sum [size c | (Con,y):ys <- tails xs, c <- foldM subbox y (map snd ys)]
+solve = sum . map size . foldl applyCommand []
+
+-- | Apply a command given a list of non-overlapping, illuminated regions.
+applyCommand ::
+  [Box n]    {- ^ pre-lit boxes  -} ->
+  (C, Box n) {- ^ command        -} ->
+  [Box n]    {- ^ post-lit boxes -}
+applyCommand ons (c, b) = [b | Con == c] ++ concatMap (subbox b) ons
 
 -- * Segments
 
@@ -97,12 +102,12 @@ subbox ::
   Box n {- ^ remove -} ->
   [Box n]
 subbox b1 b2
-  | isNothing (intersectBox b1 b2) = [b1]
+  | isNothing (intersectBox b1 b2) = [b2]
   | otherwise = [b | (b, All False) <- runWriterT (go b1 b2)]
   where
     segs (Seg a b) (Seg c d) =
-      let xs = [a] ++ [c | a < c, c < b] ++ [d | a < d, d < b] ++ [b]
-      in writerT [(Seg lo hi, All (c <= lo && lo < d)) | lo <- xs | hi <- tail xs]
+      let xs = [c] ++ [a | c < a, a < d] ++ [b | c < b, b < d] ++ [d]
+      in writerT [(Seg lo hi, All (a <= lo && lo < b)) | lo <- xs | hi <- tail xs]
 
     go :: Box n -> Box n -> WriterT All [] (Box n)
     go Pt        Pt        = pure Pt
