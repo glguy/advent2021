@@ -178,3 +178,4 @@ executable Day21
 executable Day22
   import:              day
   main-is:             Day22.hs
+  build-depends:       transformers

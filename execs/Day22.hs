@@ -1,4 +1,4 @@
-{-# Language ParallelListComp, BlockArguments, TemplateHaskell, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language KindSignatures, GADTs, DataKinds, ParallelListComp, BlockArguments, TemplateHaskell, ImportQualifiedPost, QuasiQuotes #-}
 {-|
 Module      : Main
 Description : Day 22 solution
@@ -16,7 +16,10 @@ unique to the current command will affect the final output.
 module Main (main) where
 
 import Advent.Format (format)
+import Control.Monad.Trans.Writer.CPS (runWriterT, writerT, WriterT)
+import Data.Kind (Type)
 import Data.Maybe (isNothing)
+import Data.Monoid (All(All))
 
 -- | On and off commands from the input file
 data C = Con | Coff
@@ -31,51 +34,20 @@ main :: IO ()
 main =
  do inp <- [format|22 (@C x=%d..%d,y=%d..%d,z=%d..%d%n)*|]
     let seg lo hi = Seg lo (hi+1) -- make upper limit exclusive
-        steps = [ (c, Cuboid (seg x1 x2) (seg y1 y2) (seg z1 z2))
+        steps = [ (c, seg x1 x2 :× seg y1 y2 :× seg z1 z2 :× Pt)
                 | (c,x1,x2,y1,y2,z1,z2) <- inp]
         p1seg = seg (-50) 50
-        p1cube = Cuboid p1seg p1seg p1seg
-    print $ solve [(cmd, cube') | (cmd, cube) <- steps, Just cube' <- [intersect p1cube cube]]
+        p1cube = p1seg :× p1seg :× p1seg :× Pt
+    print $ solve [(cmd, cube') | (cmd, cube) <- steps, Just cube' <- [intersectBox p1cube cube]]
     print (solve steps)
 
 -- | Figure out how many lights the given instructions turn on.
-solve :: [(C, Cuboid)] -> Int
+solve :: [(C, Box n)] -> Int
 solve [] = 0
 solve ((Coff,_):xs) = solve xs
-solve ((Con,c):xs) = sum (map volume c') + solve xs
+solve ((Con,c):xs) = sum (map size c') + solve xs
   where
-    c' = foldl (\acc y -> subcubes y =<< acc) [c] (map snd xs)
-
--- * Cuboids
-
--- | A cuboid is defined by segments on the three axises.
-data Cuboid = Cuboid !Seg !Seg !Seg deriving (Eq, Ord, Show)
-
--- | Find the overlap between two cuboids.
-intersect :: Cuboid -> Cuboid -> Maybe Cuboid
-intersect (Cuboid x1 y1 z1) (Cuboid x2 y2 z2) =
-  Cuboid <$> intersectSeg x1 x2 <*> intersectSeg y1 y2 <*> intersectSeg z1 z2
-
--- | Compute the volume of a cube
-volume :: Cuboid -> Int
-volume (Cuboid x y z) = len x * len y * len z
-
--- | Return all the cubes that are in the second
--- argument and not in the first argument.
-subcubes :: Cuboid -> Cuboid -> [Cuboid]
-subcubes c1@(Cuboid x1 y1 z1) c2@(Cuboid x2 y2 z2)
-  | isNothing (intersect c1 c2) = [c2]
-  | otherwise =
-    [ Cuboid x y z
-      | (inx, x) <- segs x1 x2
-      , (iny, y) <- segs y1 y2
-      , (inz, z) <- segs z1 z2
-      , not (inx && iny && inz)
-    ]
-  where
-    segs (Seg a b) (Seg c d) =
-      let xs = [c] ++ [a | c < a, a < d] ++ [b | c < b, b < d] ++ [d]
-      in [(a <= lo && lo < b, Seg lo hi) | lo <- xs | hi <- tail xs]
+    c' = foldl (\acc y -> subbox y =<< acc) [c] (map snd xs)
 
 -- * Segments
 
@@ -94,3 +66,35 @@ intersectSeg (Seg alo ahi) (Seg blo bhi)
   where
     lo = max alo blo
     hi = min ahi bhi
+
+-- * Generalized N-dimensional Boxes
+
+-- | Natural numbers (used for type index)
+data N = S N | Z
+
+data Box :: N -> Type where
+  Pt   :: Box 'Z
+  (:×) :: Seg -> Box n -> Box ('S n)
+
+infixr 4 :×
+
+size :: Box n -> Int
+size Pt         = 1
+size (s :× box) = len s * size box
+
+intersectBox :: Box n -> Box n -> Maybe (Box n)
+intersectBox Pt        Pt        = pure Pt
+intersectBox (x :× xs) (y :× ys) = (:×) <$> intersectSeg x y <*> intersectBox xs ys
+
+subbox :: Box n -> Box n -> [Box n]
+subbox b1 b2
+  | isNothing (intersectBox b1 b2) = [b2]
+  | otherwise = [b | (b, All False) <- runWriterT (go b1 b2)]
+  where
+    segs (Seg a b) (Seg c d) =
+      let xs = [c] ++ [a | c < a, a < d] ++ [b | c < b, b < d] ++ [d]
+      in writerT [(Seg lo hi, All (a <= lo && lo < b)) | lo <- xs | hi <- tail xs]
+
+    go :: Box n -> Box n -> WriterT All [] (Box n)
+    go Pt        Pt        = pure Pt
+    go (x :× xs) (y :× ys) = (:×) <$> segs x y <*> go xs ys
