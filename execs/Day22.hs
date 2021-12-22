@@ -42,9 +42,6 @@ main =
     print (solve steps)
 
 -- | Figure out how many lights the given instructions turn on.
---
--- Each @on@ command has all future boxes subtracted from it before
--- being included in the sum.
 solve :: [(C, Box n)] -> Int
 solve = sum . map size . foldl applyCommand []
 
