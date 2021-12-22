@@ -34,10 +34,10 @@ main :: IO ()
 main =
  do inp <- [format|22 (@C x=%d..%d,y=%d..%d,z=%d..%d%n)*|]
     let seg lo hi = Seg lo (hi+1) -- make upper limit exclusive
-        steps = [ (c, seg x1 x2 :× seg y1 y2 :× seg z1 z2 :× Pt)
+        steps = [ (c, seg x1 x2 :* seg y1 y2 :* seg z1 z2 :* Pt)
                 | (c,x1,x2,y1,y2,z1,z2) <- inp]
         p1seg = seg (-50) 50
-        p1cube = p1seg :× p1seg :× p1seg :× Pt
+        p1cube = p1seg :* p1seg :* p1seg :* Pt
     print (solve (mapMaybe (traverse (intersectBox p1cube)) steps))
     print (solve steps)
 
@@ -78,19 +78,19 @@ data N = S N | Z
 -- | An n-dimensional box.
 data Box :: N -> Type where
   Pt   :: Box 'Z -- ^ A single point
-  (:×) :: Seg -> Box n -> Box ('S n) -- ^ A box extended along an axis
+  (:*) :: Seg -> Box n -> Box ('S n) -- ^ A box extended along an axis
 
-infixr 6 :× -- a little higher than list cons
+infixr 6 :* -- a little higher than list cons
 
 -- | Returns the number of points contained in a box.
 size :: Box n -> Int
 size Pt         = 1
-size (s :× box) = len s * size box
+size (s :* box) = len s * size box
 
 -- | Find the intersection between two boxes.
 intersectBox :: Box n -> Box n -> Maybe (Box n)
 intersectBox Pt        Pt        = pure Pt
-intersectBox (x :× xs) (y :× ys) = (:×) <$> intersectSeg x y <*> intersectBox xs ys
+intersectBox (x :* xs) (y :* ys) = (:*) <$> intersectSeg x y <*> intersectBox xs ys
 
 -- | Subtract the second box from the first box returning a list of boxes
 -- that cover all the remaining area.
@@ -108,4 +108,4 @@ subBox b1 b2
 
     go :: Box n -> Box n -> WriterT All [] (Box n)
     go Pt        Pt        = pure Pt
-    go (x :× xs) (y :× ys) = (:×) <$> segs x y <*> go xs ys
+    go (x :* xs) (y :* ys) = (:*) <$> segs x y <*> go xs ys
