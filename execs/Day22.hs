@@ -1,4 +1,4 @@
-{-# Language LambdaCase, BlockArguments, TemplateHaskell, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language ParallelListComp, BlockArguments, TemplateHaskell, ImportQualifiedPost, QuasiQuotes #-}
 {-|
 Module      : Main
 Description : Day 22 solution
@@ -13,8 +13,9 @@ module Main (main) where
 
 import Advent.Format (format)
 import Data.List ( foldl', nub, sort )
+import Data.Maybe
 
-data C = Con | Coff 
+data C = Con | Coff
   deriving (Show, Eq, Ord)
 
 mempty -- template haskell staging
@@ -24,13 +25,18 @@ data Cube = Cube !Seg !Seg !Seg deriving (Eq, Ord, Show)
 data Seg = Seg !Int !Int deriving (Eq, Ord, Show)
 
 -- | Determine if two cubes have some overlap
-overlap :: Cube -> Cube -> Bool
-overlap (Cube x1 y1 z1) (Cube x2 y2 z2) =
-  overseg x1 x2 && overseg y1 y2 && overseg z1 z2
+intersect :: Cube -> Cube -> Maybe Cube
+intersect (Cube x1 y1 z1) (Cube x2 y2 z2) =
+  Cube <$> intersectSeg x1 x2 <*> intersectSeg y1 y2 <*> intersectSeg z1 z2
 
 -- | Determine if two segments have some overlap
-overseg :: Seg -> Seg -> Bool
-overseg (Seg alo ahi) (Seg blo bhi) = max alo blo < min ahi bhi
+intersectSeg :: Seg -> Seg -> Maybe Seg
+intersectSeg (Seg alo ahi) (Seg blo bhi)
+  | lo < hi = Just (Seg lo hi)
+  | otherwise = Nothing
+  where
+    lo = max alo blo
+    hi = min ahi bhi
 
 -- | >>> :main
 -- 606484
@@ -39,22 +45,10 @@ main :: IO ()
 main =
  do inp <- [format|22 (@C x=%d..%d,y=%d..%d,z=%d..%d%n)*|]
     let steps = [(c, Cube (Seg x1 (x2+1)) (Seg y1 (y2+1)) (Seg z1 (z2+1))) | (c,x1,x2,y1,y2,z1,z2) <- inp]
-    print $ solve [(cmd, cube') | (cmd, cube) <- steps, Just cube' <- [truncateCube cube]]
-    print $ solve steps
-
--- | Truncate a cube to fit in part 1's narrow window
-truncateCube :: Cube -> Maybe Cube
-truncateCube (Cube x y z) =
-  Cube <$> truncateSeg x <*> truncateSeg y <*> truncateSeg z
-
--- | Helper for 'truncateCube'
-truncateSeg :: Seg -> Maybe Seg
-truncateSeg (Seg lo hi)
-  | a < b = Just (Seg a b)
-  | otherwise = Nothing
-  where
-    a = max (-50) lo
-    b = min 51 hi
+        p1seg = Seg (-50) 51
+        p1cube = Cube p1seg p1seg p1seg
+    print $ solve [(cmd, cube') | (cmd, cube) <- steps, Just cube' <- [intersect p1cube cube]]
+    print (solve steps)
 
 -- | Figure out how many lights the given instructions turn on.
 solve :: [(C, Cube)] -> Int
@@ -73,20 +67,18 @@ len :: Seg -> Int
 len (Seg lo hi) = hi - lo
 
 -- | Return all the cubes that are in the second
--- argument and not in the first argument. 
+-- argument and not in the first argument.
 subcubes :: Cube -> Cube -> [Cube]
 subcubes c1@(Cube x1 y1 z1) c2@(Cube x2 y2 z2)
-  | not (overlap c1 c2) = [c2]
-  | otherwise = 
+  | isNothing (intersect c1 c2) = [c2]
+  | otherwise =
     [ Cube x y z
-      | x <- segs x1 x2
-      , y <- segs y1 y2
-      , z <- segs z1 z2
-      , let c = Cube x y z
-      , not (overlap c1 c)
-      , overlap c2 c
+      | (inx, x) <- segs x1 x2
+      , (iny, y) <- segs y1 y2
+      , (inz, z) <- segs z1 z2
+      , not (inx && iny && inz)
     ]
-  where    
+  where
     segs (Seg a b) (Seg c d) =
-      let xs = nub (sort [a,b,c,d])
-      in zipWith Seg xs (tail xs)
+      let xs = nub (sort ([a | c <= a, a < d] ++ [b | c <= b, b < d] ++ [c,d]))
+      in [(a <= lo && lo < b, Seg lo hi) | lo <- xs | hi <- tail xs]
