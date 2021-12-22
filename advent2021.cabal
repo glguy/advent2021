@@ -174,3 +174,7 @@ executable Day21
   import:              day
   main-is:             Day21.hs
   build-depends:       containers, transformers
+
+executable Day22
+  import:              day
+  main-is:             Day22.hs
