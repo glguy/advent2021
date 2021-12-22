@@ -16,12 +16,12 @@ unique to the current command will affect the final output.
 module Main (main) where
 
 import Advent.Format (format)
+import Control.Monad (foldM)
 import Control.Monad.Trans.Writer.CPS (runWriterT, writerT, WriterT)
 import Data.Kind (Type)
 import Data.List (tails)
 import Data.Maybe (isNothing, mapMaybe)
 import Data.Monoid (All(All))
-import Control.Monad
 
 -- | On and off commands from the input file
 data C = Con | Coff
