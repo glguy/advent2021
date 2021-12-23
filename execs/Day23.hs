@@ -1,4 +1,4 @@
-{-# Language BlockArguments, ImportQualifiedPost, QuasiQuotes #-}
+{-# Language ImportQualifiedPost #-}
 {-|
 Module      : Main
 Description : Day 23 solution
@@ -8,24 +8,24 @@ Maintainer  : emertens@gmail.com
 
 <https://adventofcode.com/2021/day/23>
 
+Search for the cheapest way to rearrange lizards in a maze
+to get all the lizards back into the correct rooms.
+
 -}
 module Main (main) where
 
+import Advent.Coord
+    ( Coord(..), coordCol, below, manhattan, cardinal )
 import Advent.Input ( getInputMap )
+import Advent.Search (AStep(AStep), dfs, astar)
 import Data.List (find)
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Advent.Search (AStep(AStep), dfs, astar)
-import Advent.Coord
 
 main :: IO ()
 main =
- do inp <- getInputMap 23
-    let Just (_, cost) = find (done . fst) (astar step inp)
-    print cost
-
-isHallway :: Coord -> Bool
-isHallway c = coordRow c == 1 && not (isRoom c)
+ do inp <- Map.filter (`elem` ".ABCD") <$> getInputMap 23
+    print (head [cost | (w, cost) <- astar step inp, done w])
 
 isRoom :: Coord -> Bool
 isRoom (C _ c) = c == 3 || c == 5 || c == 7 || c == 9
@@ -33,43 +33,47 @@ isRoom (C _ c) = c == 3 || c == 5 || c == 7 || c == 9
 step :: Map Coord Char -> [AStep (Map Coord Char)]
 step w =
   [ AStep w' (manhattan c dest * tokCost tok) 0
-  | c <- [c | (c, tok) <- Map.toList w, tok `elem` "ABCD."]
-  , let tok = w Map.! c
-  , tok /= '.'
+  | (c, tok) <- Map.toList w
+  , tok `elem` "ABCD"
   , dest <- route w c
     
   , if isRoom c
-      then isHallway dest
+      then not (isRoom dest)
+        && not (roomClean w (coordCol c) (target (coordCol c)))
       else isRoom dest
         && coordCol dest == roomCol tok
-        && roomClean w tok
-        && (w Map.! below dest) `elem` [tok, '#']
+        && roomClean w (roomCol tok) tok
+        && Map.findWithDefault tok (below dest) w == tok
 
   , let w' = Map.insert c '.'
            $ Map.insert dest tok w
   ]
 
-roomClean :: Map Coord Char -> Char -> Bool
-roomClean w tok = all (`elem` [tok,'.'])
-                $ takeWhile ('#' /=) [w Map.! C r (roomCol tok) | r <- [2..]]
+target :: Int -> Char
+target 3 = 'A'
+target 5 = 'B'
+target 7 = 'C'
+target 9 = 'D'
+
+roomClean :: Map Coord Char -> Int -> Char -> Bool
+roomClean w c tok = roomCheck w c (`elem` [tok,'.'])
 
 done :: Map Coord Char -> Bool
-done w = all (\tok ->
-  all (tok ==)
-  $ takeWhile ('#' /=) [w Map.! C r (roomCol tok) | r <- [2..]]
-  ) "ABCD"
+done w = all (\tok -> roomCheck w (roomCol tok) (tok ==)) "ABCD"
+
+roomCheck :: Map Coord Char -> Int -> (Char -> Bool) -> Bool
+roomCheck w c p = go 2
+  where
+    go r =
+      case Map.lookup (C r c) w of
+        Nothing -> True
+        Just x -> p x && go (r+1)
 
 roomCol :: Char -> Int
 roomCol 'A' = 3
 roomCol 'B' = 5
 roomCol 'C' = 7
 roomCol 'D' = 9
-
-rooms :: Char -> [Coord]
-rooms 'A' = [C 2 3, C 3 3, C 4 3, C 5 3]
-rooms 'B' = [C 2 5, C 3 5, C 4 5, C 5 5]
-rooms 'C' = [C 2 7, C 3 7, C 4 7, C 5 7]
-rooms 'D' = [C 2 9, C 3 9, C 4 9, C 5 9]
 
 tokCost :: Char -> Int
 tokCost 'A' = 1
@@ -80,4 +84,4 @@ tokCost 'D' = 1000
 route :: Map Coord Char -> Coord -> [Coord]
 route w = dfs move
   where
-    move c = [c' | c' <- cardinal c, w Map.! c' == '.']
+    move c = [c' | c' <- cardinal c, Map.lookup c' w == Just '.']
