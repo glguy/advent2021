@@ -159,4 +159,4 @@ data AStep a = AStep {
   astepNext      :: a,    -- ^ successor node
   astepCost      :: !Int, -- ^ cost of edge
   astepHeuristic :: !Int  -- ^ heuristic cost to goal from this new node
-  }
+  } deriving Show
