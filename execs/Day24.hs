@@ -17,15 +17,14 @@ import Data.Char (intToDigit)
 main :: IO ()
 main =
  do inp <- map extract . chunks 18 . map words <$> getInputLines 24
-    let blocks = [(impl a b c, b) | (a,b,c) <- inp]
-    putStrLn $ map intToDigit $ head $ solve [9,8..1] 0 blocks
-    putStrLn $ map intToDigit $ head $ solve [1,2..9] 0 blocks
+    putStrLn $ map intToDigit $ head $ solve [9,8..1] 0 inp
+    putStrLn $ map intToDigit $ head $ solve [1,2..9] 0 inp
 
-solve :: [Int] -> Int -> [(Int -> Int -> Int, Int)] -> [[Int]]
-solve guesses !z ((f,b):bs) =
+solve :: [Int] -> Int -> [(Int, Int, Int)] -> [[Int]]
+solve guesses !z ((a,b,c):bs) =
   [i:is
     | i <- if b < 0 then [w | let w = z`mod`26 + b, 1 <= w, w <= 9] else guesses
-    , is <- solve guesses (f i z) bs
+    , is <- solve guesses (impl a b c i z) bs
   ]
 solve _ z [] = [[] | z == 0]
      
