@@ -184,3 +184,7 @@ executable Day23
   import:              day
   main-is:             Day23.hs
   build-depends:       containers
+
+executable Day24
+  import:              day
+  main-is:             Day24.hs
