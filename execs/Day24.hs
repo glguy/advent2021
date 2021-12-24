@@ -22,6 +22,9 @@ module Main (main) where
 import Advent (getInputLines, chunks, fromDigits, scanlM)
 import Text.Read (readMaybe)
 
+-- | >>> :main
+-- 49917929934999
+-- 11911316711816
 main :: IO ()
 main =
  do pgm <- map extract . chunks 18 . map words <$> getInputLines 24
