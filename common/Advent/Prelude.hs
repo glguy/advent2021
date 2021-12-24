@@ -1,4 +1,4 @@
-{-# Language ImportQualifiedPost #-}
+{-# Language ImportQualifiedPost, BlockArguments #-}
 {-|
 Module      : Advent.Prelude
 Description : Prelude extension for AoC solutions
@@ -12,7 +12,9 @@ Advent of Code problems.
 -}
 module Advent.Prelude where
 
+import Control.Monad.Trans.State (StateT(StateT, runStateT))
 import Data.Array.Unboxed qualified as A
+import Data.Coerce (coerce)
 import Data.Foldable (toList)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
@@ -217,3 +219,6 @@ power (#) one n
       | 1 == i    = one
       | even i    = double (go (i `quot` 2))
       | otherwise = double (go (i `quot` 2)) # one
+
+scanlM :: (Traversable t, Monad m) => (b -> a -> m (c, a)) -> a -> t b -> m (t c, a)
+scanlM f z t = runStateT (traverse (coerce f) t) z

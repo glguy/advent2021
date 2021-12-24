@@ -1,4 +1,4 @@
-{-# Language BangPatterns, ViewPatterns #-}
+{-# Language BangPatterns, LambdaCase, ViewPatterns #-}
 {-|
 Module      : Main
 Description : Day 24 solution
@@ -8,27 +8,50 @@ Maintainer  : emertens@gmail.com
 
 <https://adventofcode.com/2021/day/24>
 
+These programs were composed of 14 nearly-identical program chunks
+each of which varies in 3 parameters. Some of these chunks will
+always increase the @z@ register and others have the potential to
+decrease @z@. Successfully validating an input will require all
+blocks with decrease potential to actually decrease. The 'pick'
+implementation will only choose a parameter that would decrease
+in one of these cases.
+
 -}
 module Main (main) where
 
-import Advent (getInputLines, chunks, fromDigits)
-import Data.Char (intToDigit)
+import Advent (getInputLines, chunks, fromDigits, scanlM)
 import Text.Read (readMaybe)
 
 main :: IO ()
 main =
- do inp <- map extract . chunks 18 . map words <$> getInputLines 24
-    print $ fromDigits 10 $ head $ solve [9,8..1] 0 inp
-    print $ fromDigits 10 $ head $ solve [1,2..9] 0 inp
+ do pgm <- map extract . chunks 18 . map words <$> getInputLines 24
+    print (solve [9,8..1] pgm)
+    print (solve [1,2..9] pgm)
 
-solve :: [Int] -> Int -> [(Int, Int, Int)] -> [[Int]]
-solve guesses !z ((a,b,c):bs) =
-  [i:is
-    | i <- if b < 0 then [w | let w = z`mod`26 + b, 1 <= w, w <= 9] else guesses
-    , is <- solve guesses (impl a b c i z) bs
+-- | Compute the input string that satisfies the given program.
+solve ::
+  [Int]             {- ^ input digit guesses in order of preference -} ->
+  [(Int, Int, Int)] {- ^ program blocks -} ->
+  Int               {- ^ first valid input -}
+solve guesses pgm =
+  head [fromDigits 10 input | (input, 0) <- scanlM (pick guesses) 0 pgm]
+
+-- | Compute the possible input choices and resulting z from each choice.
+pick ::
+  [Int]           {- ^ input digit guesses in order of preference -} ->
+  (Int, Int, Int) {- ^ block parameters -} ->
+  Int             {- ^ starting z value -} ->
+  [(Int, Int)]    {- ^ selected input value and resulting output z -}
+pick guesses (a,b,c) z =
+  [ (i, impl a b c i z)
+  | i <- if a == 26 then [w | let w = z`mod`26 + b, 1 <= w, w <= 9]
+                    else guesses
   ]
-solve _ z [] = [[] | z == 0]
-     
+
+-- | Extract the variable parameters from a single block. These parameters
+-- can be passed into 'impl' to compute this effect's block on @z@ given
+-- an input digit. Programs are comprised of one of these blocks per each
+-- digit of the input.
 extract :: [[String]] -> (Int, Int, Int)
 extract [
   ["inp", "w"      ],
@@ -52,7 +75,15 @@ extract [
   (a, b, c)
 extract x = error (show x)
 
-impl :: Int -> Int -> Int -> Int -> Int -> Int
+-- | Manually compiled behavior of an input block with parameters determined
+-- by 'extract'.
+impl ::
+  Int {- ^ first parameter -} ->
+  Int {- ^ second parameter -} ->
+  Int {- ^ third parameter -} ->
+  Int {- ^ input digit -} ->
+  Int {- ^ z register -} ->
+  Int {- ^ z register -}
 impl a b c w z
   | z`mod`26 + b == w = z `div` a
   | otherwise         = z `div` a * 26 + w + c
