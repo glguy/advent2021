@@ -16,20 +16,20 @@ import Advent.Input (getInputMap)
 import Data.Map (Map)
 import Data.Map qualified as Map
 
+-- | >>> :main
+-- 582
 main :: IO ()
 main =
  do inp <- getInputMap 25
     let C ny nx = 1 + maximum (Map.keys inp)
     let inp' = Map.filter (`elem` ">v") inp
     let steps = iterate (step ny nx) inp'
-    print (repeatsAt steps)
+    print (length (evolution steps))
 
-repeatsAt :: Eq a => [a] -> Int
-repeatsAt = go 1
-  where
-    go i (x:y:_) | x == y = i
-    go i (_:xs) = go (i+1) xs
-    go _ [] = error "didn't repeat"
+evolution :: Eq a => [a] -> [a]
+evolution (x:y:_) | x == y = [x]
+evolution (x:xs) = x : evolution xs
+evolution [] = []
 
 step :: Int -> Int -> Map Coord Char -> Map Coord Char
 step ny nx = step1 ny nx 'v' below . step1 ny nx '>' right
